@@ -37,7 +37,7 @@ TEST_CASE("result") {
     }
 
     SUBCASE("is movable in Err state") {
-        auto a = nestl::result<Movable, Fail>::err({});
+        auto a = nestl::result<Fail, Movable>::err({});
         auto b = std::move(a);
     }
 }

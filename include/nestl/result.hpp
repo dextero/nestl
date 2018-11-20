@@ -101,12 +101,32 @@ public:
         return r;
     }
 
+    template <typename... Args>
+    [[nodiscard]]
+    static result emplace_ok(Args&&... args)
+    {
+        result r;
+        r.m_state = state::Ok;
+        new (&r.m_value.ok) T(std::forward<Args>(args)...);
+        return r;
+    }
+
     [[nodiscard]]
     static result err(E&& e) noexcept
     {
         result r;
         r.m_state = state::Err;
         new (&r.m_value.err) E(std::forward<E>(e));
+        return r;
+    }
+
+    template <typename... Args>
+    [[nodiscard]]
+    static result emplace_err(Args&&... args)
+    {
+        result r;
+        r.m_state = state::Err;
+        new (&r.m_value.err) T(std::forward<Args>(args)...);
         return r;
     }
 
@@ -141,7 +161,7 @@ public:
     }
 
     [[nodiscard]]
-    const T& err() const& noexcept
+    const E& err() const& noexcept
     {
         assert(m_state == state::Err);
         return m_value.err;

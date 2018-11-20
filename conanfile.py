@@ -18,7 +18,7 @@ class NestlConan(ConanFile):
     generators = "cmake"
     no_copy_source = True
     settings = "os", "arch", "compiler", "build_type"
-    requires = "public-conan/doctest:bincrafters@2.0"
+    requires = "doctest/2.0.0@bincrafters/stable"
 
     def build(self):
         cmake = CMake(self)

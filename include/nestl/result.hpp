@@ -133,11 +133,11 @@ public:
     }
 
     [[nodiscard]]
-    T err() && noexcept
+    E err() && noexcept
     {
         assert(m_state == state::Err);
         m_state = state::Empty;
-        return std::move(m_value.ok);
+        return std::move(m_value.err);
     }
 
     [[nodiscard]]

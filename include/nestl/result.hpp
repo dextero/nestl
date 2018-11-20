@@ -63,7 +63,9 @@ public:
 
     result& operator =(result&& r) noexcept
     {
-        switch (m_state) {
+        this->~result();
+
+        switch (r.m_state) {
         case state::Ok:
             m_value.ok = std::move(r.m_value.ok);
             break;
@@ -90,6 +92,8 @@ public:
         case state::Empty:
             break;
         }
+
+        m_state = state::Empty;
     }
 
     [[nodiscard]]
@@ -129,7 +133,6 @@ public:
     T ok() && noexcept
     {
         assert(m_state == state::Ok);
-        m_state = state::Empty;
         return std::move(m_value.ok);
     }
 
@@ -144,7 +147,6 @@ public:
     E err() && noexcept
     {
         assert(m_state == state::Err);
-        m_state = state::Empty;
         return std::move(m_value.err);
     }
 
@@ -160,10 +162,7 @@ public:
     {
         using R = result<decltype(f(m_value.ok)), E>;
 
-        state old_state = state::Empty;
-        std::swap(m_state, old_state);
-
-        switch (old_state) {
+        switch (m_state) {
         case state::Ok:
             return R::ok(f(m_value.ok));
         case state::Err:

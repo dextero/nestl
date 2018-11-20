@@ -40,4 +40,12 @@ TEST_CASE("result") {
         auto a = nestl::result<Fail, Movable>::err({});
         auto b = std::move(a);
     }
+
+    SUBCASE("is true-ish in Ok state") {
+        REQUIRE(static_cast<bool>(nestl::result<Movable, Fail>::ok({})));
+    }
+
+    SUBCASE("is false-ish in Err state") {
+        REQUIRE(!static_cast<bool>(nestl::result<Fail, Movable>::err({})));
+    }
 }

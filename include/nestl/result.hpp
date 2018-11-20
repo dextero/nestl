@@ -27,7 +27,20 @@ private:
         holder() {}
     } m_value;
 
-    result() : m_state(state::Empty) {}
+    struct ok_t {};
+    struct err_t {};
+
+    template <typename... Args>
+    result(ok_t, Args&&... args) : m_state(state::Ok)
+    {
+        new (&m_value.ok) T(std::forward<Args>(args)...);
+    }
+
+    template <typename... Args>
+    result(err_t, Args&&... args) : m_state(state::Err)
+    {
+        new (&m_value.err) E(std::forward<Args>(args)...);
+    }
 
 public:
     result(const result& r) = delete;
@@ -39,10 +52,8 @@ public:
         >
     >
     result(T&& t) noexcept
-        : m_state(state::Ok)
-    {
-        new (&m_value.ok) T(std::forward<T>(t));
-    }
+        : result(ok_t{}, std::forward<T>(t))
+    {}
 
     template <
         typename = std::enable_if_t<
@@ -50,10 +61,8 @@ public:
         >
     >
     result(E&& e) noexcept
-        : m_state(state::Err)
-    {
-        new (&m_value.err) E(std::forward<E>(e));
-    }
+        : result(err_t{}, std::forward<E>(e))
+    {}
 
     result(result&& r) noexcept
         : m_state(state::Empty)
@@ -95,39 +104,27 @@ public:
     [[nodiscard]]
     static result ok(T&& t) noexcept
     {
-        result r;
-        r.m_state = state::Ok;
-        new (&r.m_value.ok) T(std::forward<T>(t));
-        return r;
+        return { ok_t{}, std::forward<T>(t) };
     }
 
     template <typename... Args>
     [[nodiscard]]
     static result emplace_ok(Args&&... args)
     {
-        result r;
-        r.m_state = state::Ok;
-        new (&r.m_value.ok) T(std::forward<Args>(args)...);
-        return r;
+        return { ok_t{}, std::forward<Args>(args)... };
     }
 
     [[nodiscard]]
     static result err(E&& e) noexcept
     {
-        result r;
-        r.m_state = state::Err;
-        new (&r.m_value.err) E(std::forward<E>(e));
-        return r;
+        return { err_t{}, std::forward<E>(e) };
     }
 
     template <typename... Args>
     [[nodiscard]]
     static result emplace_err(Args&&... args)
     {
-        result r;
-        r.m_state = state::Err;
-        new (&r.m_value.err) T(std::forward<Args>(args)...);
-        return r;
+        return { err_t{}, std::forward<Args>(args)... };
     }
 
     [[nodiscard]]

@@ -63,6 +63,10 @@ public:
 
     result& operator =(result&& r) noexcept
     {
+        if (&r != this) {
+            return *this;
+        }
+
         this->~result();
 
         switch (r.m_state) {

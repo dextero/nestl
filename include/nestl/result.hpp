@@ -29,6 +29,7 @@ private:
 
     struct ok_t {};
     struct err_t {};
+    struct inaccessible_t {};
 
     template <typename... Args>
     result(ok_t, Args&&... args) : m_state(state::Ok)
@@ -46,21 +47,11 @@ public:
     result(const result& r) = delete;
     result& operator =(const result& r) = delete;
 
-    template <
-        typename = std::enable_if_t<
-            !std::is_same_v<T, E>
-        >
-    >
     result(T&& t) noexcept
         : result(ok_t{}, std::forward<T>(t))
     {}
 
-    template <
-        typename = std::enable_if_t<
-            !std::is_same_v<T, E>
-        >
-    >
-    result(E&& e) noexcept
+    result(E&& e, inaccessible_t = {}) noexcept
         : result(err_t{}, std::forward<E>(e))
     {}
 
@@ -182,7 +173,7 @@ public:
     template <typename F>
     auto map_err(const F& f) -> result<T, decltype(f(m_value.err))>
     {
-        using R = result<decltype(f(m_value.ok)), E>;
+        using R = result<T, decltype(f(m_value.err))>;
 
         switch (m_state) {
         case state::Ok:

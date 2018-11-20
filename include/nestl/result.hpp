@@ -58,7 +58,7 @@ public:
     result(result&& r) noexcept
         : m_state(state::Empty)
     {
-        *this = std::forward<result>(r);
+        *this = std::move(r);
     }
 
     result& operator =(result&& r) noexcept

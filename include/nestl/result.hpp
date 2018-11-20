@@ -25,6 +25,7 @@ private:
         E err;
 
         holder() {}
+        ~holder() {}
     } m_value;
 
     struct ok_t {};
@@ -181,10 +182,7 @@ public:
     {
         using R = result<T, decltype(f(m_value.err))>;
 
-        state old_state = state::Empty;
-        std::swap(m_state, old_state);
-
-        switch (old_state) {
+        switch (m_state) {
         case state::Ok:
             return R::ok(std::move(m_value.ok));
         case state::Err:

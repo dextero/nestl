@@ -1,5 +1,7 @@
 #include <nestl/result.hpp>
 
+#include <memory>
+
 #include <doctest.h>
 
 TEST_CASE("result") {
@@ -23,17 +25,65 @@ TEST_CASE("result") {
         Copyable& operator =(const Copyable&) = default;
     };
 
-    struct Fail {
-        struct summon_t {};
+    struct Mock {
+        struct summon_t{};
+        struct Control {
+            size_t expected_moves = 0;
+            size_t expected_copies = 0;
+        };
 
-        Fail() { FAIL("unexpected default ctor call"); }
-        Fail(summon_t) {}
+        std::shared_ptr<Control> control;
 
-        Fail(Fail&&) { FAIL("unexpected move ctor call"); }
-        Fail& operator =(Fail&&) { FAIL("unexpected move-assign call"); return *this; }
+        Mock &expect_moves(size_t n) {
+            control->expected_moves = n;
+            return *this;
+        }
 
-        Fail(const Fail&) { FAIL("unexpected copy ctor call"); }
-        const Fail& operator =(Fail&) { FAIL("unexpected copy-assign call"); return *this; }
+        Mock &expect_copies(size_t n) {
+            control->expected_copies = n;
+            return *this;
+        }
+
+        Mock() { FAIL("unexpected default ctor call"); }
+        ~Mock() {
+            if (control.use_count() == 1) {
+                REQUIRE(control->expected_moves == 0);
+                REQUIRE(control->expected_copies == 0);
+            }
+        }
+
+        Mock(summon_t) : control(std::make_shared<Control>()) {}
+        static Mock make() { return { summon_t{} }; }
+
+        Mock(Mock&& src) {
+            if (src.control->expected_moves == 0) {
+                FAIL("unexpected move-assign call");
+            }
+            *this = std::move(src);
+        }
+
+        Mock& operator =(Mock&& src) {
+            control = src.control;
+            if (control->expected_moves-- == 0) {
+                FAIL("unexpected move-assign call");
+            }
+            return *this;
+        }
+
+        Mock(const Mock& src) {
+            if (src.control->expected_copies == 0) {
+                FAIL("unexpected copy ctor call");
+            }
+            *this = src;
+        }
+
+        Mock& operator =(const Mock& src) {
+            control = src.control;
+            if (control->expected_copies-- == 0) {
+                FAIL("unexpected copy-assign call");
+            }
+            return *this;
+        }
     };
 
     SUBCASE("is constructible from T if T != E") {
@@ -49,64 +99,70 @@ TEST_CASE("result") {
     }
 
     SUBCASE("is movable in Ok state") {
-        auto a = nestl::result<Movable, Fail>::ok({});
+        auto a = nestl::result<Movable, Mock>::ok({});
         auto b = std::move(a);
     }
 
     SUBCASE("is movable in Err state") {
-        auto a = nestl::result<Fail, Movable>::err({});
+        auto a = nestl::result<Mock, Movable>::err({});
         auto b = std::move(a);
     }
 
     SUBCASE("is true-ish in Ok state") {
-        REQUIRE(static_cast<bool>(nestl::result<Movable, Fail>::ok({})));
+        REQUIRE(static_cast<bool>(nestl::result<Movable, Mock>::ok({})));
     }
 
     SUBCASE("is false-ish in Err state") {
-        REQUIRE(!static_cast<bool>(nestl::result<Fail, Movable>::err({})));
+        REQUIRE(!static_cast<bool>(nestl::result<Mock, Movable>::err({})));
     }
 
     SUBCASE("can be safely moved-from in Ok state") {
-        auto a = nestl::result<Movable, Fail>::emplace_ok();
+        auto a = nestl::result<Movable, Mock>::emplace_ok();
         auto b = std::move(a).ok();
     }
 
     SUBCASE("can be safely moved-from in Err state") {
-        auto a = nestl::result<Fail, Movable>::emplace_err();
+        auto a = nestl::result<Mock, Movable>::emplace_err();
         auto b = std::move(a).err();
     }
 
     SUBCASE("can be safely copied-from in Ok state") {
-        auto a = nestl::result<Copyable, Fail>::emplace_ok();
+        auto a = nestl::result<Copyable, Mock>::emplace_ok();
         auto b = a.ok();
     }
 
     SUBCASE("can be safely copied-from in Err state") {
-        auto a = nestl::result<Fail, Copyable>::emplace_err();
+        auto a = nestl::result<Mock, Copyable>::emplace_err();
         auto b = a.err();
     }
 
     SUBCASE("can map Ok") {
-        nestl::result<int, Fail> a =
-            nestl::result<Movable, Fail>::emplace_ok()
+        nestl::result<int, Mock> a =
+            nestl::result<Movable, Mock>::emplace_ok()
                 .map([](Movable&) { return 0; });
     }
 
     SUBCASE("map is a noop in Err state") {
-        nestl::result<Fail, Fail> a =
-            nestl::result<Fail, Fail>::emplace_err(Fail::summon_t{})
-                .map([](Fail&) { return Fail{}; });
+        nestl::result<Mock, Mock> a =
+            nestl::result<Mock, Mock>::emplace_err(Mock::make().expect_moves(1))
+                .map([](Mock&) {
+                         FAIL("should not be called");
+                         return Mock::make();
+                     });
     }
 
     SUBCASE("can map_err Err") {
-        nestl::result<Fail, int> a =
-            nestl::result<Fail, Movable>::emplace_err()
+        nestl::result<Mock, int> a =
+            nestl::result<Mock, Movable>::emplace_err()
                 .map_err([](Movable&) { return 0; });
     }
 
     SUBCASE("map_err is a noop in Ok state") {
-        nestl::result<Fail, Fail> a =
-            nestl::result<Fail, Fail>::emplace_ok(Fail::summon_t{})
-                .map_err([](Fail&) { return Fail{}; });
+        nestl::result<Mock, Mock> a =
+            nestl::result<Mock, Mock>::emplace_ok(Mock::make().expect_moves(1))
+                .map_err([](Mock&) {
+                             FAIL("should not be called");
+                             return Mock::make();
+                         });
     }
 }

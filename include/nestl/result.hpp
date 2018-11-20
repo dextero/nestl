@@ -156,28 +156,34 @@ public:
     }
 
     template <typename F>
-    auto map(const F& f) -> result<decltype(f(m_value.ok)), E>
+    auto map(const F& f) && -> result<decltype(f(m_value.ok)), E>
     {
         using R = result<decltype(f(m_value.ok)), E>;
 
-        switch (m_state) {
+        state old_state = state::Empty;
+        std::swap(m_state, old_state);
+
+        switch (old_state) {
         case state::Ok:
             return R::ok(f(m_value.ok));
         case state::Err:
-            return R::err(m_value.err);
+            return R::err(std::move(m_value.err));
         case state::Empty:
             __builtin_unreachable();
         }
     }
 
     template <typename F>
-    auto map_err(const F& f) -> result<T, decltype(f(m_value.err))>
+    auto map_err(const F& f) && -> result<T, decltype(f(m_value.err))>
     {
         using R = result<T, decltype(f(m_value.err))>;
 
-        switch (m_state) {
+        state old_state = state::Empty;
+        std::swap(m_state, old_state);
+
+        switch (old_state) {
         case state::Ok:
-            return R::ok(m_value.ok);
+            return R::ok(std::move(m_value.ok));
         case state::Err:
             return R::err(f(m_value.err));
         case state::Empty:

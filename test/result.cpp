@@ -30,10 +30,10 @@ TEST_CASE("result") {
         Fail(summon_t) {}
 
         Fail(Fail&&) { FAIL("unexpected move ctor call"); }
-        Fail& operator =(Fail&&) { FAIL("unexpected move-assign call"); }
+        Fail& operator =(Fail&&) { FAIL("unexpected move-assign call"); return *this; }
 
         Fail(const Fail&) { FAIL("unexpected copy ctor call"); }
-        const Fail& operator =(Fail&) { FAIL("unexpected copy-assign call"); }
+        const Fail& operator =(Fail&) { FAIL("unexpected copy-assign call"); return *this; }
     };
 
     SUBCASE("is constructible from T if T != E") {
@@ -87,9 +87,9 @@ TEST_CASE("result") {
     }
 
     SUBCASE("can map Ok") {
-        nestl::result<Copyable, Fail> a =
+        nestl::result<int, Fail> a =
             nestl::result<Movable, Fail>::emplace_ok()
-                .map([](Movable&) { return Copyable{}; });
+                .map([](Movable&) { return 0; });
     }
 
     SUBCASE("map is a noop in Err state") {
@@ -99,9 +99,9 @@ TEST_CASE("result") {
     }
 
     SUBCASE("can map_err Err") {
-        nestl::result<Fail, Copyable> a =
+        nestl::result<Fail, int> a =
             nestl::result<Fail, Movable>::emplace_err()
-                .map_err([](Movable&) { return Copyable{}; });
+                .map_err([](Movable&) { return 0; });
     }
 
     SUBCASE("map_err is a noop in Ok state") {

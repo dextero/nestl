@@ -16,7 +16,8 @@ target_compile_features(nestl INTERFACE cxx_std_17)
 
 add_executable(nestl_test test/main.cpp)
 target_sources(nestl_test PRIVATE
-               test/result.cpp)
+               test/result.cpp
+               test/variant.cpp)
 target_link_libraries(nestl_test PRIVATE nestl)
 
 enable_testing()

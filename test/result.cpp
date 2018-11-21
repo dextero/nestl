@@ -34,14 +34,14 @@ TEST_CASE("result") {
 
         std::shared_ptr<Control> control;
 
-        Mock &expect_moves(size_t n) {
+        Mock&& expect_moves(size_t n) && {
             control->expected_moves = n;
-            return *this;
+            return std::move(*this);
         }
 
-        Mock &expect_copies(size_t n) {
+        Mock&& expect_copies(size_t n) && {
             control->expected_copies = n;
-            return *this;
+            return std::move(*this);
         }
 
         Mock() { FAIL("unexpected default ctor call"); }
@@ -144,7 +144,7 @@ TEST_CASE("result") {
 
     SUBCASE("map is a noop in Err state") {
         nestl::result<Mock, Mock> a =
-            nestl::result<Mock, Mock>::emplace_err(Mock::make().expect_moves(1))
+            nestl::result<Mock, Mock>::emplace_err(Mock::make().expect_moves(2))
                 .map([](Mock&) {
                          FAIL("should not be called");
                          return Mock::make();
@@ -159,7 +159,7 @@ TEST_CASE("result") {
 
     SUBCASE("map_err is a noop in Ok state") {
         nestl::result<Mock, Mock> a =
-            nestl::result<Mock, Mock>::emplace_ok(Mock::make().expect_moves(1))
+            nestl::result<Mock, Mock>::emplace_ok(Mock::make().expect_moves(2))
                 .map_err([](Mock&) {
                              FAIL("should not be called");
                              return Mock::make();

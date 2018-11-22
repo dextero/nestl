@@ -12,6 +12,12 @@ TEST_CASE("variant") {
 
     struct Test {};
 
+    SUBCASE("is constructible from any variant") {
+        variant<int, const char *, Movable>{1};
+        variant<int, const char *, Movable>{"foo"};
+        variant<int, const char *, Movable>{Movable{}};
+    }
+
     SUBCASE("can hold values of different types") {
         auto v1 = variant<int>{1};
         auto v2 = variant<int, const char *>{1};

@@ -5,6 +5,8 @@
 #include <type_traits>
 #include <utility>
 
+#include <nestl/detail/variant_base.hpp>
+
 namespace nestl {
 
 template <
@@ -14,130 +16,94 @@ template <
 class result
 {
 private:
-    enum class state {
-        Empty,
-        Ok,
-        Err
-    } m_state;
+    struct ok_tag {};
+    struct err_tag {};
 
-    union holder {
-        T ok;
-        E err;
+    template <typename Tag, typename V>
+    struct wrapper {
+        V value;
 
-        holder() {}
-        ~holder() {}
-    } m_value;
+        template <typename... Args>
+        wrapper(Args&&... args)
+            : value(std::forward<Args>(args)...)
+        {}
+    };
 
-    struct ok_t {};
-    struct err_t {};
+    template <typename Tag>
+    struct wrapper<Tag, void> {};
+
+    using ok_t = wrapper<ok_tag, T>;
+    using err_t = wrapper<err_tag, E>;
+    struct empty_t {};
+
+    using variant = nestl::detail::unchecked_variant<ok_t, err_t, empty_t>;
+
+    variant m_value;
+
+    template <typename> struct emplace_t {};
     struct inaccessible_t {};
 
-    template <typename... Args>
-    result(ok_t, Args&&... args) : m_state(state::Ok)
-    {
-        new (&m_value.ok) T(std::forward<Args>(args)...);
-    }
-
-    template <typename... Args>
-    result(err_t, Args&&... args) : m_state(state::Err)
-    {
-        new (&m_value.err) E(std::forward<Args>(args)...);
-    }
+    template <typename EmplaceT, typename... Args>
+    result(emplace_t<EmplaceT>, Args&&... args)
+        : m_value(variant::template emplace<EmplaceT>(std::forward<Args>(args)...))
+    {}
 
 public:
-    result(const result& r) = delete;
-    result& operator =(const result& r) = delete;
-
     result(T&& t) noexcept
-        : result(ok_t{}, std::forward<T>(t))
+        : m_value(ok_t{std::move(t)})
     {}
 
     result(E&& e, inaccessible_t = {}) noexcept
-        : result(err_t{}, std::forward<E>(e))
+        : m_value(err_t{std::move(e)})
     {}
 
-    result(result&& r) noexcept
-        : m_state(state::Empty)
-    {
-        *this = std::move(r);
-    }
+    result(result&& r) noexcept = default;
+    result& operator =(result&& r) = default;
 
-    result& operator =(result&& r) noexcept
-    {
-        if (&r == this) {
-            return *this;
-        }
-
-        this->~result();
-
-        switch (r.m_state) {
-        case state::Ok:
-            m_value.ok = std::move(r.m_value.ok);
-            break;
-        case state::Err:
-            m_value.err = std::move(r.m_value.err);
-            break;
-        case state::Empty:
-            __builtin_unreachable();
-        }
-
-        std::swap(m_state, r.m_state);
-        return *this;
-    }
+    result(const result& r) = delete;
+    result& operator =(const result& r) = delete;
 
     ~result() noexcept
     {
-        switch (m_state) {
-        case state::Ok:
-            m_value.ok.~T();
-            break;
-        case state::Err:
-            m_value.err.~E();
-            break;
-        case state::Empty:
-            break;
-        }
-
-        m_state = state::Empty;
+        m_value = empty_t{};
     }
 
     [[nodiscard]]
     static result ok(T&& t) noexcept
     {
-        return { ok_t{}, std::forward<T>(t) };
+        return { emplace_t<ok_t>{}, std::forward<T>(t) };
     }
 
     template <typename... Args>
     [[nodiscard]]
     static result emplace_ok(Args&&... args)
     {
-        return { ok_t{}, std::forward<Args>(args)... };
+        return { emplace_t<ok_t>{}, std::forward<Args>(args)... };
     }
 
     [[nodiscard]]
     static result err(E&& e) noexcept
     {
-        return { err_t{}, std::forward<E>(e) };
+        return { emplace_t<err_t>{}, std::forward<E>(e) };
     }
 
     template <typename... Args>
     [[nodiscard]]
     static result emplace_err(Args&&... args)
     {
-        return { err_t{}, std::forward<Args>(args)... };
+        return { emplace_t<err_t>{}, std::forward<Args>(args)... };
     }
 
     [[nodiscard]]
     bool is_ok() const noexcept
     {
-        assert(m_state != state::Empty);
-        return m_state == state::Ok;
+        return m_value.template is<ok_t>();
     }
 
     [[nodiscard]]
     bool is_err() const noexcept
     {
-        return !is_ok();
+        return m_value.template is<err_t>();
     }
 
     [[nodiscard]]
@@ -149,31 +115,28 @@ public:
     [[nodiscard]]
     T ok() && noexcept
     {
-        assert(m_state == state::Ok);
-        return std::move(m_value.ok);
+        return std::move(m_value).template get_unchecked<ok_t>().value;
     }
 
     [[nodiscard]]
     const T &ok() const& noexcept
     {
-        assert(m_state == state::Ok);
-        return m_value.ok;
+        return m_value.template get_unchecked<ok_t>().value;
     }
 
     [[nodiscard]]
     E err() && noexcept
     {
-        assert(m_state == state::Err);
-        return std::move(m_value.err);
+        return std::move(m_value).template get_unchecked<err_t>().value;
     }
 
     [[nodiscard]]
     const E& err() const& noexcept
     {
-        assert(m_state == state::Err);
-        return m_value.err;
+        return m_value.template get_unchecked<err_t>().value;
     }
 
+#if 0
     template <typename F>
     auto map(const F& f) && -> result<decltype(f(m_value.ok)), E>
     {
@@ -203,6 +166,7 @@ public:
             __builtin_unreachable();
         }
     }
+#endif
 };
 
 } // namespace nestl

@@ -69,6 +69,7 @@ TEST_CASE("result") {
         auto b = a.err();
     }
 
+#if 0
     SUBCASE("can map Ok") {
         result<int, Mock> a =
             result<Movable, Mock>::emplace_ok()
@@ -98,4 +99,13 @@ TEST_CASE("result") {
                              return Mock::make();
                          });
     }
+
+    SUBCASE("can hold void") {
+        auto ok = result<void, void>::ok();
+        REQUIRE(ok.is_ok());
+
+        auto ok = result<void, void>::err();
+        REQUIRE(ok.is_err());
+    }
+#endif
 }

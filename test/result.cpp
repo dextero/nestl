@@ -7,65 +7,67 @@
 #include "test_utils.hpp"
 
 TEST_CASE("result") {
+    using nestl::result;
+
     SUBCASE("is constructible from T if T != E") {
-        auto r = nestl::result<int, const char *>{1};
+        auto r = result<int, const char *>{1};
     }
 
     SUBCASE("is constructible from E if T != W") {
-        auto r = nestl::result<int, const char *>{"foo"};
+        auto r = result<int, const char *>{"foo"};
     }
 
     SUBCASE("allows for T == E") {
-        auto r = nestl::result<int, int>::ok(1);
+        auto r = result<int, int>::ok(1);
     }
 
     SUBCASE("is movable in Ok state") {
-        auto a = nestl::result<Movable, Mock>::ok({});
+        auto a = result<Movable, Mock>::ok({});
         auto b = std::move(a);
     }
 
     SUBCASE("is movable in Err state") {
-        auto a = nestl::result<Mock, Movable>::err({});
+        auto a = result<Mock, Movable>::err({});
         auto b = std::move(a);
     }
 
     SUBCASE("is true-ish in Ok state") {
-        REQUIRE(static_cast<bool>(nestl::result<Movable, Mock>::ok({})));
+        REQUIRE(static_cast<bool>(result<Movable, Mock>::ok({})));
     }
 
     SUBCASE("is false-ish in Err state") {
-        REQUIRE(!static_cast<bool>(nestl::result<Mock, Movable>::err({})));
+        REQUIRE(!static_cast<bool>(result<Mock, Movable>::err({})));
     }
 
     SUBCASE("can be safely moved-from in Ok state") {
-        auto a = nestl::result<Movable, Mock>::emplace_ok();
+        auto a = result<Movable, Mock>::emplace_ok();
         auto b = std::move(a).ok();
     }
 
     SUBCASE("can be safely moved-from in Err state") {
-        auto a = nestl::result<Mock, Movable>::emplace_err();
+        auto a = result<Mock, Movable>::emplace_err();
         auto b = std::move(a).err();
     }
 
     SUBCASE("can be safely copied-from in Ok state") {
-        auto a = nestl::result<Copyable, Mock>::emplace_ok();
+        auto a = result<Copyable, Mock>::emplace_ok();
         auto b = a.ok();
     }
 
     SUBCASE("can be safely copied-from in Err state") {
-        auto a = nestl::result<Mock, Copyable>::emplace_err();
+        auto a = result<Mock, Copyable>::emplace_err();
         auto b = a.err();
     }
 
     SUBCASE("can map Ok") {
-        nestl::result<int, Mock> a =
-            nestl::result<Movable, Mock>::emplace_ok()
+        result<int, Mock> a =
+            result<Movable, Mock>::emplace_ok()
                 .map([](Movable&) { return 0; });
     }
 
     SUBCASE("map is a noop in Err state") {
-        nestl::result<Mock, Mock> a =
-            nestl::result<Mock, Mock>::emplace_err(Mock::make().expect_moves(2))
+        result<Mock, Mock> a =
+            result<Mock, Mock>::emplace_err(Mock::make().expect_moves(2))
                 .map([](Mock&) {
                          FAIL("should not be called");
                          return Mock::make();
@@ -73,14 +75,14 @@ TEST_CASE("result") {
     }
 
     SUBCASE("can map_err Err") {
-        nestl::result<Mock, int> a =
-            nestl::result<Mock, Movable>::emplace_err()
+        result<Mock, int> a =
+            result<Mock, Movable>::emplace_err()
                 .map_err([](Movable&) { return 0; });
     }
 
     SUBCASE("map_err is a noop in Ok state") {
-        nestl::result<Mock, Mock> a =
-            nestl::result<Mock, Mock>::emplace_ok(Mock::make().expect_moves(2))
+        result<Mock, Mock> a =
+            result<Mock, Mock>::emplace_ok(Mock::make().expect_moves(2))
                 .map_err([](Mock&) {
                              FAIL("should not be called");
                              return Mock::make();

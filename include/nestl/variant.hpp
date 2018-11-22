@@ -142,7 +142,7 @@ public:
         m_current = construct<std::decay_t<T>, 0, Ts...>(std::forward<T>(t));
     }
 
-    variant(variant&& src) : m_current(invalid_type_index) {
+    variant(variant&& src) {
         *this = std::move(src);
     }
 

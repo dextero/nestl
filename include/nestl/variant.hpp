@@ -115,8 +115,8 @@ private:
 public:
     template <typename T>
     variant(T&& t) {
-        static_assert(is_one_of<T, Ts...>);
-        m_current = construct<T, 0, Ts...>(std::forward<T>(t));
+        static_assert(is_one_of<std::decay_t<T>, Ts...>);
+        m_current = construct<std::decay_t<T>, 0, Ts...>(std::forward<T>(t));
     }
 
     ~variant() {

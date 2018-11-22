@@ -5,6 +5,8 @@
 
 #include <doctest.h>
 
+#include "test_utils.hpp"
+
 TEST_CASE("variant") {
     struct Test {};
 
@@ -44,5 +46,15 @@ TEST_CASE("variant") {
         REQUIRE(v.get<int>().is_err());
         REQUIRE(v.get<const char *>().is_err());
         REQUIRE(v.get<Test>().is_ok());
+    }
+
+    SUBCASE("can be safely moved-from") {
+        auto a = nestl::variant<Movable, Mock>{Movable{}};
+        auto b = std::move(a).get<Movable>();
+    }
+
+    SUBCASE("can be safely copied-from") {
+        auto a = nestl::variant<Movable, Mock>{Movable{}};
+        auto b = a.get<Movable>();
     }
 }

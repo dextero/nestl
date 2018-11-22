@@ -101,7 +101,11 @@ private:
     template <typename T, size_t N, typename First, typename... Rest>
     inline result<std::reference_wrapper<T>, variant_type_error> get_impl() {
         if (m_current == N) {
-            return { m_storage.template as<T>() };
+            if (std::is_same_v<T, First>) {
+                return { m_storage.template as<T>() };
+            } else {
+                return { variant_type_error {} };
+            }
         } else {
             return get_impl<T, N + 1, Rest...>();
         }

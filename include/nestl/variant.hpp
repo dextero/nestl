@@ -101,7 +101,7 @@ private:
     template <typename T, size_t N, typename First, typename... Rest>
     inline result<std::reference_wrapper<T>, variant_type_error> get_impl() {
         if (m_current == N) {
-            if (std::is_same_v<T, First>) {
+            if (std::is_same_v<std::remove_const_t<T>, First>) {
                 return { m_storage.template as<T>() };
             } else {
                 return { variant_type_error {} };
@@ -125,10 +125,17 @@ public:
 
     ~variant() {
         destruct<0, Ts...>();
+        m_current = detail::invalid_type_index;
     }
 
     template <typename T>
-    result<std::reference_wrapper<T>, variant_type_error> get() {
+    result<std::reference_wrapper<T>, variant_type_error> get() & {
+        static_assert(is_one_of<T, Ts...>);
+        return get_impl<T, 0, Ts...>();
+    }
+
+    template <typename T>
+    result<std::reference_wrapper<T>, variant_type_error> get() && {
         static_assert(is_one_of<T, Ts...>);
         return get_impl<T, 0, Ts...>();
     }
@@ -137,12 +144,6 @@ public:
     result<std::reference_wrapper<const T>, variant_type_error> get() const {
         static_assert(is_one_of<T, Ts...>);
         return const_cast<variant*>(this)->get_impl<const T, 0, Ts...>();
-    }
-
-    template <typename T>
-    result<std::reference_wrapper<T&&>, variant_type_error> get() && {
-        static_assert(is_one_of<T, Ts...>);
-        return get_impl<T&&, 0, Ts...>();
     }
 };
 

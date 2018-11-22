@@ -32,6 +32,15 @@ TEST_CASE("variant") {
         REQUIRE(v2.get<Copyable>().is_ok());
     }
 
+    SUBCASE("supports emplace with arguments") {
+        struct Foo {
+            int a;
+            double b;
+            Foo(int a, double b) : a(a), b(b) {}
+        };
+        auto v = variant<Foo, int>::emplace<Foo>(1, 2.0);
+    }
+
     SUBCASE("can hold values of different types") {
         auto v1 = variant<int>{1};
         auto v2 = variant<int, const char *>{1};

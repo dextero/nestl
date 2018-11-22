@@ -23,7 +23,7 @@ struct storage {
 
     template <typename T>
     T& as() {
-        static_assert(is_one_of<T, Args...>);
+        static_assert(is_one_of<std::remove_const_t<T>, Args...>);
         return *reinterpret_cast<T*>(data);
     }
 
@@ -35,7 +35,7 @@ struct storage {
 
     template <typename T>
     const T& as() const {
-        static_assert(is_one_of<T, Args...>);
+        static_assert(is_one_of<std::remove_const_t<T>, Args...>);
         return *reinterpret_cast<const T*>(data);
     }
 

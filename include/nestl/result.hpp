@@ -128,10 +128,22 @@ public:
     }
 
     [[nodiscard]]
-    operator bool() const noexcept
+    bool is_ok() const noexcept
     {
         assert(m_state != state::Empty);
         return m_state == state::Ok;
+    }
+
+    [[nodiscard]]
+    bool is_err() const noexcept
+    {
+        return !is_ok();
+    }
+
+    [[nodiscard]]
+    operator bool() const noexcept
+    {
+        return is_ok();
     }
 
     [[nodiscard]]

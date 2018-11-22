@@ -64,7 +64,7 @@ public:
 
     result& operator =(result&& r) noexcept
     {
-        if (&r != this) {
+        if (&r == this) {
             return *this;
         }
 

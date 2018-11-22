@@ -1,7 +1,6 @@
 #pragma once
 
 #include <cstddef>
-#include <limits>
 #include <type_traits>
 
 #include <nestl/result.hpp>
@@ -9,8 +8,6 @@
 
 namespace nestl {
 namespace detail {
-
-constexpr size_t invalid_type_index = std::numeric_limits<size_t>::max();
 
 template <typename... Args>
 struct storage {
@@ -66,13 +63,13 @@ template <typename... Ts>
 struct variant
 {
 private:
-    size_t m_current = detail::invalid_type_index;
+    size_t m_current = invalid_type_index;
     detail::storage<Ts...> m_storage;
 
     template <typename T, size_t N, typename First, typename... Rest>
     inline size_t construct(T&& t) {
         if (std::is_same_v<T, First>) {
-            assert(m_current == detail::invalid_type_index);
+            assert(m_current == invalid_type_index);
             m_storage.template emplace<T>(std::forward<T>(t));
             return N;
         } else {
@@ -83,7 +80,7 @@ private:
     template <typename T, size_t>
     inline size_t construct(T&&) {
         abort();
-        return detail::invalid_type_index;
+        return invalid_type_index;
     }
 
     template <size_t N, typename T, typename... Rest>
@@ -125,7 +122,7 @@ public:
 
     ~variant() {
         destruct<0, Ts...>();
-        m_current = detail::invalid_type_index;
+        m_current = invalid_type_index;
     }
 
     template <typename T>

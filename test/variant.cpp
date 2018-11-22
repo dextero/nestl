@@ -18,6 +18,20 @@ TEST_CASE("variant") {
         variant<int, const char *, Movable>{Movable{}};
     }
 
+    SUBCASE("is movable") {
+        auto v1 = variant<Movable, Mock>{Movable{}};
+        auto v2 = std::move(v1);
+        REQUIRE(v1.get<Movable>().is_err());
+        REQUIRE(v2.get<Movable>().is_ok());
+    }
+
+    SUBCASE("is copyable") {
+        auto v1 = variant<Copyable, Mock>::emplace<Copyable>();
+        auto v2 = v1;
+        REQUIRE(v1.get<Copyable>().is_ok());
+        REQUIRE(v2.get<Copyable>().is_ok());
+    }
+
     SUBCASE("can hold values of different types") {
         auto v1 = variant<int>{1};
         auto v2 = variant<int, const char *>{1};

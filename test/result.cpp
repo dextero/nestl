@@ -31,6 +31,16 @@ TEST_CASE("result") {
         auto b = std::move(a);
     }
 
+    SUBCASE("correctly handles self-move") {
+        auto ok = result<Movable, Mock>::ok({});
+        ok = std::move(ok);
+        REQUIRE(ok.is_ok());
+
+        auto err = result<Mock, Movable>::err({});
+        err = std::move(err);
+        REQUIRE(err.is_err());
+    }
+
     SUBCASE("is true-ish in Ok state") {
         REQUIRE(static_cast<bool>(result<Movable, Mock>::ok({})));
     }

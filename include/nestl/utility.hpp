@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cstddef>
+#include <limits>
 #include <type_traits>
 
 namespace nestl {
@@ -38,5 +39,29 @@ constexpr bool is_none_of = is_none_of<Query, T> && is_none_of<Query, Args...>;
 
 template <typename Query, typename T>
 constexpr bool is_none_of<Query, T> = !std::is_same_v<Query, T>;
+
+
+constexpr size_t invalid_type_index = std::numeric_limits<size_t>::max();
+
+namespace detail {
+
+template <typename Query, size_t N, typename T, typename... Args>
+constexpr size_t type_index_impl =
+    std::is_same_v<Query, T> ? N : type_index_impl<Query, N, Args...>;
+
+template <typename Query, size_t N, typename T>
+constexpr size_t type_index_impl<Query, N, T> =
+    std::is_same_v<Query, T> ? N : invalid_type_index;
+
+} // namespace detail
+
+template <typename Query, typename... Args>
+constexpr size_t type_index = detail::type_index_impl<Query, 0, Args...>;
+
+
+template <typename T>
+struct tag {
+    using type = T;
+};
 
 } // namespace nestl

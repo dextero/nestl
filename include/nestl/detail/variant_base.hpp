@@ -22,9 +22,8 @@ public:
     storage& operator =(const storage&) = default;
 
     template <typename T, typename... CtorArgs>
-    storage& emplace(CtorArgs&&... args) {
+    storage(tag<T>, CtorArgs&&... args) {
         new (data) T(std::forward<CtorArgs>(args)...);
-        return *this;
     }
 
     template <typename T>
@@ -74,9 +73,17 @@ public:
             is_one_of<std::decay_t<T>, Ts...>
         >
     >
-    variant_base(T&& t) {
-        static_assert(is_one_of<std::decay_t<T>, Ts...>);
-        m_current = construct<std::decay_t<T>, 0, Ts...>(std::forward<T>(t));
+    variant_base(T&& t)
+        : variant_base(tag<std::decay_t<T>>{},
+                       std::forward<std::decay_t<T>>(t))
+    {}
+
+    template <typename T, typename... Args>
+    variant_base(tag<T> tag, Args&&... args)
+        : m_current(type_index<T, Ts...>),
+          m_storage(tag, std::forward<Args>(args)...)
+    {
+        static_assert(is_one_of<T, Ts...>);
     }
 
     variant_base(variant_base&& src) noexcept {
@@ -108,35 +115,8 @@ public:
     }
 
 protected:
-    template <typename> struct emplace_t {};
-
     size_t m_current = invalid_type_index;
     detail::storage<Ts...> m_storage;
-
-    template <typename T, typename... Args>
-    variant_base(emplace_t<T>, Args&&... args)
-        : m_current(type_index<T, Ts...>),
-          m_storage(storage<Ts...>{}.template emplace<T>(std::forward<Args>(args)...))
-    {
-        static_assert(is_one_of<T, Ts...>);
-    }
-
-    template <typename T, size_t N, typename First, typename... Rest>
-    inline size_t construct(T&& t) {
-        if (std::is_same_v<T, First>) {
-            assert(m_current == invalid_type_index);
-            m_storage.template emplace<T>(std::forward<T>(t));
-            return N;
-        } else {
-            return construct<T, N + 1, Rest...>(std::forward<T>(t));
-        }
-    }
-
-    template <typename T, size_t>
-    inline size_t construct(T&&) {
-        abort();
-        return invalid_type_index;
-    }
 
     template <size_t N, typename T, typename... Rest>
     inline void destruct() {
@@ -164,10 +144,8 @@ public:
     template <typename T, typename... Args>
     static unchecked_variant emplace(Args&&... args) noexcept
     {
-        using emplace_t = typename variant_base<Ts...>::template emplace_t<T>;
-
         return {
-            emplace_t{},
+            tag<T>{},
             std::forward<Args>(args)...
         };
     }

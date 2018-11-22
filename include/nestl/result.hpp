@@ -40,12 +40,11 @@ private:
 
     variant m_value;
 
-    template <typename> struct emplace_t {};
     struct inaccessible_t {};
 
-    template <typename EmplaceT, typename... Args>
-    result(emplace_t<EmplaceT>, Args&&... args)
-        : m_value(variant::template emplace<EmplaceT>(std::forward<Args>(args)...))
+    template <typename TagT, typename... Args>
+    result(tag<TagT> tag, Args&&... args)
+        : m_value(tag, std::forward<Args>(args)...)
     {}
 
 public:
@@ -71,27 +70,27 @@ public:
     [[nodiscard]]
     static result ok(T&& t) noexcept
     {
-        return { emplace_t<ok_t>{}, std::forward<T>(t) };
+        return { tag<ok_t>{}, std::forward<T>(t) };
     }
 
     template <typename... Args>
     [[nodiscard]]
     static result emplace_ok(Args&&... args)
     {
-        return { emplace_t<ok_t>{}, std::forward<Args>(args)... };
+        return { tag<ok_t>{}, std::forward<Args>(args)... };
     }
 
     [[nodiscard]]
     static result err(E&& e) noexcept
     {
-        return { emplace_t<err_t>{}, std::forward<E>(e) };
+        return { tag<err_t>{}, std::forward<E>(e) };
     }
 
     template <typename... Args>
     [[nodiscard]]
     static result emplace_err(Args&&... args)
     {
-        return { emplace_t<err_t>{}, std::forward<Args>(args)... };
+        return { tag<err_t>{}, std::forward<Args>(args)... };
     }
 
     [[nodiscard]]

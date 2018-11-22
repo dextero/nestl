@@ -23,10 +23,8 @@ public:
     [[nodiscard]]
     static variant emplace(Args&&... args) noexcept
     {
-        using emplace_t = typename detail::variant_base<Ts...>::template emplace_t<T>;
-
         return {
-            emplace_t{},
+            tag<T>{},
             std::forward<Args>(args)...
         };
     }

@@ -76,6 +76,7 @@ public:
     }
 
     template <typename T>
+    [[nodiscard]]
     bool is() const noexcept {
         static_assert(is_one_of<T, Ts...>);
         return type_index<T, Ts...> == m_current;
@@ -145,6 +146,7 @@ public:
     {}
 
     template <typename T, typename... Args>
+    [[nodiscard]]
     static unchecked_variant emplace(Args&&... args) noexcept
     {
         return {
@@ -154,6 +156,7 @@ public:
     }
 
     template <typename T>
+    [[nodiscard]]
     const T& get_unchecked() const noexcept
     {
         assert(!CONSTRUCTED[this].empty() && ::CONSTRUCTED[this].back().constructed);
@@ -162,6 +165,7 @@ public:
     }
 
     template <typename T>
+    [[nodiscard]]
     T&& get_unchecked() && noexcept
     {
         assert(!CONSTRUCTED[this].empty() && ::CONSTRUCTED[this].back().constructed);

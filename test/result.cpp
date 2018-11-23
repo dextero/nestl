@@ -7,7 +7,6 @@
 #include "test_utils.hpp"
 
 TEST_CASE("result") {
-#if 0
     using nestl::result;
 
     SUBCASE("is constructible from T if T != E") {
@@ -50,6 +49,7 @@ TEST_CASE("result") {
         REQUIRE(!static_cast<bool>(result<Mock, Movable>::err({})));
     }
 
+#if 0
     SUBCASE("can be safely moved-from in Ok state") {
         auto a = result<Movable, Mock>::emplace_ok();
         auto b = std::move(a).ok();

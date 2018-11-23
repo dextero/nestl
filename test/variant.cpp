@@ -32,13 +32,6 @@ TEST_CASE("variant") {
         REQUIRE(v2.get<Copyable>().is_ok());
     }
 
-    SUBCASE("is not copyable if some elements are not") {
-        static_assert(!std::is_copy_constructible_v<Movable>);
-        static_assert(!std::is_copy_constructible_v<variant<Movable>>);
-        static_assert(!std::is_copy_constructible_v<variant<Movable, Copyable>>);
-        static_assert(!std::is_copy_constructible_v<variant<Copyable, Movable>>);
-    }
-
     SUBCASE("supports emplace with arguments") {
         struct Foo {
             int a;

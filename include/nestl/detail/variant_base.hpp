@@ -57,6 +57,7 @@ public:
     }
 
     variant_base(const variant_base& src) noexcept {
+        static_assert(all_of<std::is_copy_constructible, Ts...>);
         *this = src;
     }
 

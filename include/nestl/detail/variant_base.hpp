@@ -33,10 +33,12 @@ public:
     }
 
     variant_base(variant_base&& src) noexcept {
+        static_assert(all_of<std::is_move_constructible, Ts...>);
         *this = std::move(src);
     }
 
     variant_base& operator =(variant_base&& src) noexcept {
+        static_assert(all_of<std::is_move_constructible, Ts...>);
         if (this != &src) {
             src.move_into(*this);
         }

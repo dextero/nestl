@@ -74,7 +74,6 @@ constexpr size_t type_index_impl<Query, N, T> =
 template <typename Query, typename... Args>
 constexpr size_t type_index = detail::type_index_impl<Query, 0, Args...>;
 
-
 static_assert(type_index<int, int> == 0);
 static_assert(type_index<int, char, int> == 1);
 static_assert(type_index<int, char, int, long> == 1);

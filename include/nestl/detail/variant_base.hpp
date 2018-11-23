@@ -60,19 +60,13 @@ public:
         *this = src;
     }
 
-#if 0
-    template <
-        typename = std::enable_if_t<
-            all_of<std::is_copy_constructible, Ts...>
-        >
-    >
     variant_base& operator =(const variant_base& src) {
+        static_assert(all_of<std::is_copy_constructible, Ts...>);
         if (this != &src) {
             src.copy_into(*this);
         }
         return *this;
     }
-#endif
 
     ~variant_base() {
         assert(invalid_type_index || (!CONSTRUCTED[this].empty() && ::CONSTRUCTED[this].back().constructed));
@@ -115,28 +109,29 @@ protected:
             this->~variant_base();
             m_current = invalid_type_index;
         } else {
-            destruct<N + 1, Rest...>();
-        }
-    }
-
-    inline void copy_into(variant_base& dst) {
-        copy_into_impl<0, Ts...>(dst);
-    }
-
-    template <size_t N, typename T, typename... Rest>
-    inline void copy_into_impl(variant_base& dst) {
-        if (m_current == N) {
-            dst.~variant_base();
-            new (&dst) variant_base(tag<T>{}, m_storage.template as<T>());
-            this->~variant_base();
-            m_current = invalid_type_index;
-        } else {
-            destruct<N + 1, Rest...>();
+            move_into_impl<N + 1, Rest...>(dst);
         }
     }
 
     template <size_t>
     inline void move_into_impl(variant_base&) {}
+
+    inline void copy_into(variant_base& dst) const {
+        copy_into_impl<0, Ts...>(dst);
+    }
+
+    template <size_t N, typename T, typename... Rest>
+    inline void copy_into_impl(variant_base& dst) const {
+        if (m_current == N) {
+            dst.~variant_base();
+            new (&dst) variant_base(tag<T>{}, m_storage.template as<T>());
+        } else {
+            copy_into_impl<N + 1, Rest...>(dst);
+        }
+    }
+
+    template <size_t>
+    inline void copy_into_impl(variant_base&) const {}
 };
 
 template <typename... Ts>

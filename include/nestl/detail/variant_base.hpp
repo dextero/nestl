@@ -6,17 +6,6 @@
 #include <nestl/utility.hpp>
 #include <nestl/detail/storage.hpp>
 
-#include <map>
-#include <vector>
-
-struct Dupa {
-    bool constructed;
-    const char *file;
-    int line;
-};
-
-static std::map<const void *, std::vector<Dupa>> CONSTRUCTED;
-
 namespace nestl {
 namespace detail {
 
@@ -40,9 +29,7 @@ public:
         : m_current(type_index<T, Ts...>),
           m_storage(tag, std::forward<Args>(args)...)
     {
-        assert(CONSTRUCTED[this].empty() || !::CONSTRUCTED[this].back().constructed);
         static_assert(is_one_of<T, Ts...>);
-        ::CONSTRUCTED[this].push_back({ true, __FILE__, __LINE__ });
     }
 
     variant_base(variant_base&& src) noexcept {
@@ -70,10 +57,8 @@ public:
     }
 
     ~variant_base() noexcept {
-        assert(invalid_type_index || (!CONSTRUCTED[this].empty() && ::CONSTRUCTED[this].back().constructed));
         destruct<0, Ts...>();
         m_current = invalid_type_index;
-        ::CONSTRUCTED[this].push_back({ false, __FILE__, __LINE__ });
     }
 
     template <typename T>
@@ -160,7 +145,6 @@ public:
     [[nodiscard]]
     const T& get_unchecked() const noexcept
     {
-        assert(!CONSTRUCTED[this].empty() && ::CONSTRUCTED[this].back().constructed);
         assert(this->template is<T>());
         return this->m_storage.template as<T>();
     }
@@ -169,7 +153,6 @@ public:
     [[nodiscard]]
     T&& get_unchecked() && noexcept
     {
-        assert(!CONSTRUCTED[this].empty() && ::CONSTRUCTED[this].back().constructed);
         assert(this->template is<T>());
         return std::move(this->m_storage).template as<T>();
     }

@@ -135,22 +135,20 @@ public:
         return m_value.template get_unchecked<err_t>().value;
     }
 
-#if 0
     template <typename F>
-    auto map(const F& f) && -> result<decltype(f(m_value.ok)), E>
+    auto map(F&& f) && -> result<decltype(f(std::declval<T&&>())), E>
     {
-        using R = result<decltype(f(m_value.ok)), E>;
+        using R = result<decltype(f(std::declval<T&&>())), E>;
 
-        switch (m_state) {
-        case state::Ok:
-            return R::ok(f(m_value.ok));
-        case state::Err:
-            return R::err(std::move(m_value.err));
-        case state::Empty:
-            __builtin_unreachable();
+        if (m_value.template is<ok_t>()) {
+            return R::ok(f(std::move(m_value).template get_unchecked<ok_t>().value));
+        } else {
+            assert(m_value.template is<err_t>());
+            return R::err(std::move(m_value).template get_unchecked<err_t>().value);
         }
     }
 
+#if 0
     template <typename F>
     auto map_err(const F& f) && -> result<T, decltype(f(m_value.err))>
     {

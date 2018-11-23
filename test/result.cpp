@@ -69,13 +69,13 @@ TEST_CASE("result") {
         auto b = a.err();
     }
 
-#if 0
     SUBCASE("can map Ok") {
         result<int, Mock> a =
             result<Movable, Mock>::emplace_ok()
-                .map([](Movable&) { return 0; });
+                .map([](Movable&&) { return 0; });
     }
 
+#if 0
     SUBCASE("map is a noop in Err state") {
         result<Mock, Mock> a =
             result<Mock, Mock>::emplace_err(Mock::make().expect_moves(2))

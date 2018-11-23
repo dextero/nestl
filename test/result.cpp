@@ -49,7 +49,6 @@ TEST_CASE("result") {
         REQUIRE(!static_cast<bool>(result<Mock, Movable>::err({})));
     }
 
-#if 0
     SUBCASE("can be safely moved-from in Ok state") {
         auto a = result<Movable, Mock>::emplace_ok();
         auto b = std::move(a).ok();
@@ -60,6 +59,7 @@ TEST_CASE("result") {
         auto b = std::move(a).err();
     }
 
+#if 0
     SUBCASE("can be safely copied-from in Ok state") {
         auto a = result<Copyable, Mock>::emplace_ok();
         auto b = a.ok();

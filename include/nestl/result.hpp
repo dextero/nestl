@@ -114,7 +114,7 @@ public:
     [[nodiscard]]
     T ok() && noexcept
     {
-        return std::move(m_value.template get_unchecked<ok_t>().value);
+        return std::move(m_value).template get_unchecked<ok_t>().value;
     }
 
     [[nodiscard]]

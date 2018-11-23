@@ -26,26 +26,23 @@ constexpr size_t max_sizeof<T> = sizeof(T);
 template <>
 constexpr size_t max_sizeof<void> = static_cast<size_t>(0);
 
-template <template <typename> class Predicate, typename T, typename... Args>
-constexpr bool all_of = Predicate<T>::value && all_of<Predicate, Args...>;
 
-template <template <typename> class Predicate, typename T>
-constexpr bool all_of<Predicate, T> = Predicate<T>::value;
+template <template <typename> class Predicate, typename... Args>
+constexpr bool all_of = (Predicate<Args>::value && ... && true);
 
-
-template <typename Query, typename T, typename... Args>
-constexpr bool is_one_of = is_one_of<Query, T> || is_one_of<Query, Args...>;
-
-template <typename Query, typename T>
-constexpr bool is_one_of<Query, T> = std::is_same_v<Query, T>;
+static_assert(all_of<std::is_scalar, int, char>);
+static_assert(!all_of<std::is_scalar, int, char[3]>);
 
 
-template <typename Query, typename T, typename... Args>
-constexpr bool is_none_of = is_none_of<Query, T> && is_none_of<Query, Args...>;
+template <template <typename> class Predicate, typename... Args>
+constexpr bool any_of = (Predicate<Args>::value || ... || false);
 
-template <typename Query, typename T>
-constexpr bool is_none_of<Query, T> = !std::is_same_v<Query, T>;
+static_assert(any_of<std::is_scalar, int, char[3]>);
+static_assert(!any_of<std::is_scalar, int[3], char[3]>);
 
+
+template <typename Query, typename... Args>
+constexpr bool is_one_of = (std::is_same_v<Query, Args> || ... || false);
 
 
 constexpr size_t invalid_type_index = std::numeric_limits<size_t>::max();

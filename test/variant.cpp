@@ -25,12 +25,14 @@ TEST_CASE("variant") {
         REQUIRE(v2.get<Movable>().is_ok());
     }
 
+#if 0
     SUBCASE("is copyable") {
         auto v1 = variant<Copyable, Mock>::emplace<Copyable>();
         auto v2 = v1;
         REQUIRE(v1.get<Copyable>().is_ok());
         REQUIRE(v2.get<Copyable>().is_ok());
     }
+#endif
 
     SUBCASE("supports emplace with arguments") {
         struct Foo {
@@ -51,8 +53,9 @@ TEST_CASE("variant") {
         auto v1 = variant<int>{1};
         REQUIRE(v1.get<int>().ok() == 1);
 
-        auto v2 = variant<int, const char *>{"foo"};
-        REQUIRE(strcmp(v2.get<const char*>().ok(), "foo") == 0);
+        const char *foo = "foo";
+        auto v2 = variant<int, const char *>{foo};
+        REQUIRE(v2.get<const char*>().ok() == foo);
 
         auto v3 = variant<int, const char *, Test>{1};
         REQUIRE(v3.get<int>().ok() == 1);

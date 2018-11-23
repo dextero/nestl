@@ -7,6 +7,7 @@
 #include "test_utils.hpp"
 
 TEST_CASE("result") {
+#if 0
     using nestl::result;
 
     SUBCASE("is constructible from T if T != E") {
@@ -69,7 +70,6 @@ TEST_CASE("result") {
         auto b = a.err();
     }
 
-#if 0
     SUBCASE("can map Ok") {
         result<int, Mock> a =
             result<Movable, Mock>::emplace_ok()

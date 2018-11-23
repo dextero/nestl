@@ -64,7 +64,7 @@ public:
 
     ~result() noexcept
     {
-        m_value = empty_t{};
+        m_value.~variant();
     }
 
     [[nodiscard]]

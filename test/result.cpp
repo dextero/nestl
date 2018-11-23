@@ -59,7 +59,6 @@ TEST_CASE("result") {
         auto b = std::move(a).err();
     }
 
-#if 0
     SUBCASE("can be safely copied-from in Ok state") {
         auto a = result<Copyable, Mock>::emplace_ok();
         auto b = a.ok();
@@ -70,6 +69,7 @@ TEST_CASE("result") {
         auto b = a.err();
     }
 
+#if 0
     SUBCASE("can map Ok") {
         result<int, Mock> a =
             result<Movable, Mock>::emplace_ok()

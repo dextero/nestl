@@ -30,13 +30,13 @@ public:
             is_one_of<std::decay_t<T>, Ts...>
         >
     >
-    variant_base(T&& t)
+    variant_base(T&& t) noexcept
         : variant_base(tag<std::decay_t<T>>{},
                        std::forward<std::decay_t<T>>(t))
     {}
 
     template <typename T, typename... Args>
-    variant_base(tag<T> tag, Args&&... args)
+    variant_base(tag<T> tag, Args&&... args) noexcept
         : m_current(type_index<T, Ts...>),
           m_storage(tag, std::forward<Args>(args)...)
     {
@@ -56,11 +56,11 @@ public:
         return *this;
     }
 
-    variant_base(const variant_base& src) {
+    variant_base(const variant_base& src) noexcept {
         *this = src;
     }
 
-    variant_base& operator =(const variant_base& src) {
+    variant_base& operator =(const variant_base& src) noexcept {
         static_assert(all_of<std::is_copy_constructible, Ts...>);
         if (this != &src) {
             src.copy_into(*this);
@@ -68,7 +68,7 @@ public:
         return *this;
     }
 
-    ~variant_base() {
+    ~variant_base() noexcept {
         assert(invalid_type_index || (!CONSTRUCTED[this].empty() && ::CONSTRUCTED[this].back().constructed));
         destruct<0, Ts...>();
         m_current = invalid_type_index;
@@ -76,7 +76,7 @@ public:
     }
 
     template <typename T>
-    bool is() const {
+    bool is() const noexcept {
         static_assert(is_one_of<T, Ts...>);
         return type_index<T, Ts...> == m_current;
     }
@@ -86,7 +86,7 @@ protected:
     detail::storage<Ts...> m_storage;
 
     template <size_t N, typename T, typename... Rest>
-    inline void destruct() {
+    inline void destruct() noexcept {
         if (m_current == N) {
             m_storage.template destroy<T>();
         } else {
@@ -97,12 +97,12 @@ protected:
     template <size_t>
     inline void destruct() {}
 
-    inline void move_into(variant_base& dst) {
+    inline void move_into(variant_base& dst) noexcept {
         move_into_impl<0, Ts...>(dst);
     }
 
     template <size_t N, typename T, typename... Rest>
-    inline void move_into_impl(variant_base& dst) {
+    inline void move_into_impl(variant_base& dst) noexcept {
         if (m_current == N) {
             dst.~variant_base();
             new (&dst) variant_base(tag<T>{}, std::move(m_storage.template as<T>()));
@@ -114,14 +114,14 @@ protected:
     }
 
     template <size_t>
-    inline void move_into_impl(variant_base&) {}
+    inline void move_into_impl(variant_base&) noexcept {}
 
-    inline void copy_into(variant_base& dst) const {
+    inline void copy_into(variant_base& dst) const noexcept {
         copy_into_impl<0, Ts...>(dst);
     }
 
     template <size_t N, typename T, typename... Rest>
-    inline void copy_into_impl(variant_base& dst) const {
+    inline void copy_into_impl(variant_base& dst) const noexcept {
         if (m_current == N) {
             dst.~variant_base();
             new (&dst) variant_base(tag<T>{}, m_storage.template as<T>());
@@ -131,7 +131,7 @@ protected:
     }
 
     template <size_t>
-    inline void copy_into_impl(variant_base&) const {}
+    inline void copy_into_impl(variant_base&) const noexcept {}
 };
 
 template <typename... Ts>

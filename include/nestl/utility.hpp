@@ -16,6 +16,12 @@ constexpr size_t max_alignment<T> = alignof(T);
 template <>
 constexpr size_t max_alignment<void> = static_cast<size_t>(0);
 
+static_assert(max_alignment<void> == 0);
+static_assert(max_alignment<int> == alignof(int));
+static_assert(max_alignment<int, int> == alignof(int));
+static_assert(max_alignment<char, int> == alignof(int));
+static_assert(max_alignment<char, double, int> == alignof(double));
+
 
 template <typename T, typename... Args>
 constexpr size_t max_sizeof = std::max(max_sizeof<T>, max_sizeof<Args...>);
@@ -25,6 +31,12 @@ constexpr size_t max_sizeof<T> = sizeof(T);
 
 template <>
 constexpr size_t max_sizeof<void> = static_cast<size_t>(0);
+
+static_assert(max_sizeof<void> == 0);
+static_assert(max_sizeof<int> == sizeof(int));
+static_assert(max_sizeof<int, int> == sizeof(int));
+static_assert(max_sizeof<char, int> == sizeof(int));
+static_assert(max_sizeof<char, double, int> == sizeof(double));
 
 
 template <template <typename> class Predicate, typename... Args>

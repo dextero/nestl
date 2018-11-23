@@ -25,11 +25,18 @@ TEST_CASE("variant") {
         REQUIRE(v2.get<Movable>().is_ok());
     }
 
-    SUBCASE("is copyable") {
+    SUBCASE("is copyable if all elements are copyable") {
         auto v1 = variant<Copyable, Mock>::emplace<Copyable>();
         auto v2 = v1;
         REQUIRE(v1.get<Copyable>().is_ok());
         REQUIRE(v2.get<Copyable>().is_ok());
+    }
+
+    SUBCASE("is not copyable if some elements are not") {
+        static_assert(!std::is_copy_constructible_v<Movable>);
+        static_assert(!std::is_copy_constructible_v<variant<Movable>>);
+        static_assert(!std::is_copy_constructible_v<variant<Movable, Copyable>>);
+        static_assert(!std::is_copy_constructible_v<variant<Copyable, Movable>>);
     }
 
     SUBCASE("supports emplace with arguments") {

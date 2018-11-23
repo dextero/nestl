@@ -148,22 +148,18 @@ public:
         }
     }
 
-#if 0
     template <typename F>
-    auto map_err(const F& f) && -> result<T, decltype(f(m_value.err))>
+    auto map_err(F&& f) && -> result<T, decltype(f(std::declval<E&&>()))>
     {
-        using R = result<T, decltype(f(m_value.err))>;
+        using R = result<T, decltype(f(std::declval<E&&>()))>;
 
-        switch (m_state) {
-        case state::Ok:
-            return R::ok(std::move(m_value.ok));
-        case state::Err:
-            return R::err(f(m_value.err));
-        case state::Empty:
-            __builtin_unreachable();
+        if (m_value.template is<ok_t>()) {
+            return R::ok(std::move(m_value).template get_unchecked<ok_t>().value);
+        } else {
+            assert(m_value.template is<err_t>());
+            return R::err(f(std::move(m_value).template get_unchecked<err_t>().value));
         }
     }
-#endif
 };
 
 } // namespace nestl

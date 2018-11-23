@@ -75,11 +75,10 @@ TEST_CASE("result") {
                 .map([](Movable&&) { return 0; });
     }
 
-#if 0
     SUBCASE("map is a noop in Err state") {
         result<Mock, Mock> a =
             result<Mock, Mock>::emplace_err(Mock::make().expect_moves(2))
-                .map([](Mock&) {
+                .map([](Mock&&) {
                          FAIL("should not be called");
                          return Mock::make();
                      });
@@ -88,18 +87,19 @@ TEST_CASE("result") {
     SUBCASE("can map_err Err") {
         result<Mock, int> a =
             result<Mock, Movable>::emplace_err()
-                .map_err([](Movable&) { return 0; });
+                .map_err([](Movable&&) { return 0; });
     }
 
     SUBCASE("map_err is a noop in Ok state") {
         result<Mock, Mock> a =
             result<Mock, Mock>::emplace_ok(Mock::make().expect_moves(2))
-                .map_err([](Mock&) {
+                .map_err([](Mock&&) {
                              FAIL("should not be called");
                              return Mock::make();
                          });
     }
 
+#if 0
     SUBCASE("can hold void") {
         auto ok = result<void, void>::ok();
         REQUIRE(ok.is_ok());

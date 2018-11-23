@@ -4,64 +4,21 @@
 #include <type_traits>
 
 #include <nestl/utility.hpp>
+#include <nestl/detail/storage.hpp>
+
+#include <map>
+#include <vector>
+
+struct Dupa {
+    bool constructed;
+    const char *file;
+    int line;
+};
+
+static std::map<const void *, std::vector<Dupa>> CONSTRUCTED;
 
 namespace nestl {
 namespace detail {
-
-template <typename... Args>
-class storage {
-public:
-    alignas(max_alignment<Args...>) unsigned char data[max_sizeof<Args...>];
-
-    storage() = default;
-
-    storage(storage&&) = default;
-    storage& operator =(storage&&) = default;
-
-    storage(const storage&) = default;
-    storage& operator =(const storage&) = default;
-
-    template <typename T, typename... CtorArgs>
-    storage(tag<T>, CtorArgs&&... args) {
-        new (data) T(std::forward<CtorArgs>(args)...);
-    }
-
-    template <typename T>
-    T& as() & {
-        static_assert(is_one_of<T, Args...>);
-        return *reinterpret_cast<T*>(data);
-    }
-
-    template <typename T>
-    T&& as() && {
-        static_assert(is_one_of<T, Args...>);
-        return std::move(*reinterpret_cast<T*>(data));
-    }
-
-    template <typename T>
-    const T& as() const {
-        static_assert(is_one_of<std::remove_const_t<T>, Args...>);
-        return *reinterpret_cast<const T*>(data);
-    }
-
-    template <typename T>
-    void destroy() {
-        destroy_impl<T, Args...>();
-    }
-
-private:
-    template <typename Query, typename T, typename... Ts>
-    void destroy_impl() {
-        if (std::is_same_v<Query, T>) {
-            as<T>().~T();
-        } else {
-            destroy_impl<Query, Ts...>();
-        }
-    }
-
-    template <typename Query>
-    void destroy_impl() {}
-};
 
 template <typename... Ts>
 class variant_base
@@ -83,7 +40,9 @@ public:
         : m_current(type_index<T, Ts...>),
           m_storage(tag, std::forward<Args>(args)...)
     {
+        assert(CONSTRUCTED[this].empty() || !::CONSTRUCTED[this].back().constructed);
         static_assert(is_one_of<T, Ts...>);
+        ::CONSTRUCTED[this].push_back({ true, __FILE__, __LINE__ });
     }
 
     variant_base(variant_base&& src) noexcept {
@@ -92,20 +51,34 @@ public:
 
     variant_base& operator =(variant_base&& src) noexcept {
         if (this != &src) {
-            this->~variant_base();
-
-            m_storage = std::move(src.m_storage);
-            std::swap(m_current, src.m_current);
+            src.move_into(*this);
         }
         return *this;
     }
 
-    variant_base(const variant_base& src) = default;
-    variant_base& operator =(const variant_base& src) = default;
+    variant_base(const variant_base& src) {
+        *this = src;
+    }
+
+#if 0
+    template <
+        typename = std::enable_if_t<
+            all_of<std::is_copy_constructible, Ts...>
+        >
+    >
+    variant_base& operator =(const variant_base& src) {
+        if (this != &src) {
+            src.copy_into(*this);
+        }
+        return *this;
+    }
+#endif
 
     ~variant_base() {
+        assert(invalid_type_index || (!CONSTRUCTED[this].empty() && ::CONSTRUCTED[this].back().constructed));
         destruct<0, Ts...>();
         m_current = invalid_type_index;
+        ::CONSTRUCTED[this].push_back({ false, __FILE__, __LINE__ });
     }
 
     template <typename T>
@@ -129,6 +102,41 @@ protected:
 
     template <size_t>
     inline void destruct() {}
+
+    inline void move_into(variant_base& dst) {
+        move_into_impl<0, Ts...>(dst);
+    }
+
+    template <size_t N, typename T, typename... Rest>
+    inline void move_into_impl(variant_base& dst) {
+        if (m_current == N) {
+            dst.~variant_base();
+            new (&dst) variant_base(tag<T>{}, std::move(m_storage.template as<T>()));
+            this->~variant_base();
+            m_current = invalid_type_index;
+        } else {
+            destruct<N + 1, Rest...>();
+        }
+    }
+
+    inline void copy_into(variant_base& dst) {
+        copy_into_impl<0, Ts...>(dst);
+    }
+
+    template <size_t N, typename T, typename... Rest>
+    inline void copy_into_impl(variant_base& dst) {
+        if (m_current == N) {
+            dst.~variant_base();
+            new (&dst) variant_base(tag<T>{}, m_storage.template as<T>());
+            this->~variant_base();
+            m_current = invalid_type_index;
+        } else {
+            destruct<N + 1, Rest...>();
+        }
+    }
+
+    template <size_t>
+    inline void move_into_impl(variant_base&) {}
 };
 
 template <typename... Ts>
@@ -153,6 +161,7 @@ public:
     template <typename T>
     const T& get_unchecked() const noexcept
     {
+        assert(!CONSTRUCTED[this].empty() && ::CONSTRUCTED[this].back().constructed);
         assert(this->template is<T>());
         return this->m_storage.template as<T>();
     }
@@ -160,6 +169,7 @@ public:
     template <typename T>
     T&& get_unchecked() && noexcept
     {
+        assert(!CONSTRUCTED[this].empty() && ::CONSTRUCTED[this].back().constructed);
         assert(this->template is<T>());
         return std::move(this->m_storage).template as<T>();
     }

@@ -57,7 +57,7 @@ public:
     {}
 
     result(result&& r) noexcept = default;
-    result& operator =(result&& r) = default;
+    result& operator =(result&& r) noexcept = default;
 
     result(const result& r) = delete;
     result& operator =(const result& r) = delete;
@@ -114,7 +114,7 @@ public:
     [[nodiscard]]
     T ok() && noexcept
     {
-        return std::move(m_value).template get_unchecked<ok_t>().value;
+        return std::move(m_value.template get_unchecked<ok_t>().value);
     }
 
     [[nodiscard]]

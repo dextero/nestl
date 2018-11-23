@@ -26,6 +26,12 @@ constexpr size_t max_sizeof<T> = sizeof(T);
 template <>
 constexpr size_t max_sizeof<void> = static_cast<size_t>(0);
 
+template <template <typename> class Predicate, typename T, typename... Args>
+constexpr bool all_of = Predicate<T>::value && all_of<Predicate, Args...>;
+
+template <template <typename> class Predicate, typename T>
+constexpr bool all_of<Predicate, T> = Predicate<T>::value;
+
 
 template <typename Query, typename T, typename... Args>
 constexpr bool is_one_of = is_one_of<Query, T> || is_one_of<Query, Args...>;
@@ -41,13 +47,14 @@ template <typename Query, typename T>
 constexpr bool is_none_of<Query, T> = !std::is_same_v<Query, T>;
 
 
+
 constexpr size_t invalid_type_index = std::numeric_limits<size_t>::max();
 
 namespace detail {
 
 template <typename Query, size_t N, typename T, typename... Args>
 constexpr size_t type_index_impl =
-    std::is_same_v<Query, T> ? N : type_index_impl<Query, N, Args...>;
+    std::is_same_v<Query, T> ? N : type_index_impl<Query, N + 1, Args...>;
 
 template <typename Query, size_t N, typename T>
 constexpr size_t type_index_impl<Query, N, T> =

@@ -124,4 +124,28 @@ TEST_CASE("result") {
         auto err = result<void, void>::err();
         REQUIRE(err.is_err());
     }
+
+    SUBCASE("can map void") {
+        result<int, void> o1 =
+            result<void, void>::ok()
+                .map([]() { return 1; });
+        REQUIRE(o1.is_ok());
+        REQUIRE(o1.ok() == 1);
+
+        result<int, void> o2 =
+            result<void, void>::err()
+                .map([]() { return 1; });
+        REQUIRE(o1.is_err());
+
+        result<void, int> e1 =
+            result<void, void>::err()
+                .map_err([]() { return 1; });
+        REQUIRE(e1.is_err());
+        REQUIRE(e1.err() == 1);
+
+        result<void, int> o2 =
+            result<void, void>::err()
+                .map_err([]() { return 1; });
+        REQUIRE(o1.is_ok());
+    }
 }

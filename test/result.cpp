@@ -11,24 +11,42 @@ TEST_CASE("result") {
 
     SUBCASE("is constructible from T if T != E") {
         auto r = result<int, const char *>{1};
+        REQUIRE(r.is_ok());
+        REQUIRE(r.ok() == 1);
+        REQUIRE(!r.is_err());
     }
 
     SUBCASE("is constructible from E if T != W") {
-        auto r = result<int, const char *>{"foo"};
+        const char *foo = "foo";
+        auto r = result<int, const char *>{foo};
+        REQUIRE(!r.is_ok());
+        REQUIRE(r.is_err());
+        REQUIRE(r.err() == foo);
     }
 
     SUBCASE("allows for T == E") {
         auto r = result<int, int>::ok(1);
+        REQUIRE(r.is_ok());
+        REQUIRE(r.ok() == 1);
+        REQUIRE(!r.is_err());
     }
 
     SUBCASE("is movable in Ok state") {
         auto a = result<Movable, Mock>::ok({});
         auto b = std::move(a);
+        REQUIRE(!a.is_ok());
+        REQUIRE(!a.is_err());
+        REQUIRE(b.is_ok());
+        REQUIRE(!b.is_err());
     }
 
     SUBCASE("is movable in Err state") {
         auto a = result<Mock, Movable>::err({});
         auto b = std::move(a);
+        REQUIRE(!a.is_ok());
+        REQUIRE(!a.is_err());
+        REQUIRE(!b.is_ok());
+        REQUIRE(b.is_err());
     }
 
     SUBCASE("correctly handles self-move") {

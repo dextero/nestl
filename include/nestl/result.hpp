@@ -48,12 +48,20 @@ private:
     {}
 
 public:
+    result(const T& t) noexcept
+        : m_value(ok_t{t})
+    {}
+
     result(T&& t) noexcept
-        : m_value(ok_t{std::move(t)})
+        : m_value(ok_t{std::forward<T>(t)})
+    {}
+
+    result(const E& e, inaccessible_t = {}) noexcept
+        : m_value(err_t{e})
     {}
 
     result(E&& e, inaccessible_t = {}) noexcept
-        : m_value(err_t{std::move(e)})
+        : m_value(err_t{std::forward<E>(e)})
     {}
 
     result(result&& r) noexcept = default;

@@ -12,20 +12,6 @@ namespace nestl {
 struct ok_t {};
 struct err_t {};
 
-template <typename T>
-struct const_ref {
-    typedef const T& type;
-};
-
-template<> struct const_ref<void> {};
-
-template <typename T>
-struct rvalue_ref {
-    typedef T&& type;
-};
-
-template<> struct rvalue_ref<void> {};
-
 template <
     typename T,
     typename E
@@ -60,19 +46,23 @@ private:
     {}
 
 public:
-    result(const T& t, ok_t = {}) noexcept
+    template <typename U = T>
+    result(const std::enable_if_t<!std::is_void_v<U>, U>& t, ok_t = {}) noexcept
         : m_value(ok_v{t})
     {}
 
-    result(T&& t, ok_t = {}) noexcept
+    template <typename U = T>
+    result(std::enable_if_t<!std::is_void_v<U>, U>&& t, ok_t = {}) noexcept
         : m_value(ok_v{std::forward<T>(t)})
     {}
 
-    result(const E& e, err_t = {}) noexcept
+    template <typename U = E>
+    result(const std::enable_if_t<!std::is_void_v<U>, U>&  e, err_t = {}) noexcept
         : m_value(err_v{e})
     {}
 
-    result(E&& e, err_t = {}) noexcept
+    template <typename U = E>
+    result(std::enable_if_t<!std::is_void_v<U>, U>&& e, err_t = {}) noexcept
         : m_value(err_v{std::forward<E>(e)})
     {}
 
@@ -88,12 +78,23 @@ public:
     }
 
     template <
-        typename Ok = std::enable_if_t<!std::is_void_v<T>, T>
+        typename U = T,
+        typename Ok = std::enable_if_t<!std::is_void_v<U>, U>
     >
     [[nodiscard]]
     static result ok(Ok&& t) noexcept
     {
         return { tag<ok_v>{}, std::forward<T>(t) };
+    }
+
+    template <
+        typename U = T,
+        typename = std::enable_if_t<std::is_void_v<U>>
+    >
+    [[nodiscard]]
+    static result ok() noexcept
+    {
+        return { tag<ok_v>{} };
     }
 
     template <typename... Args>
@@ -104,12 +105,23 @@ public:
     }
 
     template <
-        typename Err = std::enable_if_t<!std::is_void_v<E>, E>
+        typename U = E,
+        typename Err = std::enable_if_t<!std::is_void_v<U>, U>
     >
     [[nodiscard]]
     static result err(Err&& e) noexcept
     {
         return { tag<err_v>{}, std::forward<E>(e) };
+    }
+
+    template <
+        typename U = E,
+        typename = std::enable_if_t<std::is_void_v<U>>
+    >
+    [[nodiscard]]
+    static result err() noexcept
+    {
+        return { tag<err_v>{} };
     }
 
     template <typename... Args>
@@ -137,32 +149,40 @@ public:
         return is_ok();
     }
 
+    template <typename U = T>
     [[nodiscard]]
-    T ok() && noexcept
+    std::enable_if_t<!std::is_void_v<U>, U> ok() && noexcept
     {
         return std::move(m_value).template get_unchecked<ok_v>().value;
     }
 
+    template <typename U = T>
     [[nodiscard]]
-    typename const_ref<T>::type ok() const& noexcept
+    std::enable_if_t<!std::is_void_v<U>, const U&> ok() const& noexcept
     {
         return m_value.template get_unchecked<ok_v>().value;
     }
 
+    template <typename U = E>
     [[nodiscard]]
-    E err() && noexcept
+    std::enable_if_t<!std::is_void_v<U>, U> err() && noexcept
     {
         return std::move(m_value).template get_unchecked<err_v>().value;
     }
 
+    template <typename U = E>
     [[nodiscard]]
-    typename const_ref<E>::type err() const& noexcept
+    std::enable_if_t<!std::is_void_v<U>, const U&> err() const& noexcept
     {
         return m_value.template get_unchecked<err_v>().value;
     }
 
-    template <typename F>
-    auto map(F&& f) && -> result<decltype(f(std::declval<T&&>())), E>
+    template <
+        typename F,
+        typename U = T
+    >
+    auto map(F&& f) &&
+        -> result<decltype(f(std::declval<std::enable_if_t<!std::is_void_v<U>, U>&&>())), E>
     {
         using R = result<decltype(f(std::declval<T&&>())), E>;
 
@@ -174,8 +194,12 @@ public:
         }
     }
 
-    template <typename F>
-    auto map_err(F&& f) && -> result<T, decltype(f(std::declval<E&&>()))>
+    template <
+        typename F,
+        typename U = E
+    >
+    auto map_err(F&& f) &&
+        -> result<T, decltype(f(std::declval<std::enable_if_t<!std::is_void_v<U>, U>&&>()))>
     {
         using R = result<T, decltype(f(std::declval<E&&>()))>;
 
@@ -189,3 +213,4 @@ public:
 };
 
 } // namespace nestl
+

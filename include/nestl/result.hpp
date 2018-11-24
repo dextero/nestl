@@ -75,8 +75,11 @@ public:
         m_value.~variant();
     }
 
+    template <
+        typename Ok = std::enable_if_t<!std::is_void_v<T>, T>
+    >
     [[nodiscard]]
-    static result ok(T&& t) noexcept
+    static result ok(Ok&& t) noexcept
     {
         return { tag<ok_t>{}, std::forward<T>(t) };
     }
@@ -88,8 +91,11 @@ public:
         return { tag<ok_t>{}, std::forward<Args>(args)... };
     }
 
+    template <
+        typename Err = std::enable_if_t<!std::is_void_v<E>, E>
+    >
     [[nodiscard]]
-    static result err(E&& e) noexcept
+    static result err(Err&& e) noexcept
     {
         return { tag<err_t>{}, std::forward<E>(e) };
     }

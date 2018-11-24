@@ -117,7 +117,6 @@ TEST_CASE("result") {
                          });
     }
 
-#if 0
     SUBCASE("can hold void") {
         auto ok = result<void, void>::ok();
         REQUIRE(ok.is_ok());
@@ -125,5 +124,4 @@ TEST_CASE("result") {
         auto ok = result<void, void>::err();
         REQUIRE(ok.is_err());
     }
-#endif
 }

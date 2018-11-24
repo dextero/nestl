@@ -9,6 +9,9 @@
 
 namespace nestl {
 
+struct ok_t {};
+struct err_t {};
+
 template <
     typename T,
     typename E
@@ -16,9 +19,6 @@ template <
 class result
 {
 private:
-    struct ok_tag {};
-    struct err_tag {};
-
     template <typename Tag, typename V>
     struct wrapper {
         V value;
@@ -32,15 +32,13 @@ private:
     template <typename Tag>
     struct wrapper<Tag, void> {};
 
-    using ok_t = wrapper<ok_tag, T>;
-    using err_t = wrapper<err_tag, E>;
+    using ok_v = wrapper<ok_t, T>;
+    using err_v = wrapper<err_t, E>;
     struct empty_t {};
 
-    using variant = nestl::detail::unchecked_variant<ok_t, err_t, empty_t>;
+    using variant = nestl::detail::unchecked_variant<ok_v, err_v, empty_t>;
 
     variant m_value;
-
-    struct inaccessible_t {};
 
     template <typename TagT, typename... Args>
     result(tag<TagT> tag, Args&&... args)
@@ -48,20 +46,20 @@ private:
     {}
 
 public:
-    result(const T& t) noexcept
-        : m_value(ok_t{t})
+    result(const T& t, ok_t = {}) noexcept
+        : m_value(ok_v{t})
     {}
 
-    result(T&& t) noexcept
-        : m_value(ok_t{std::forward<T>(t)})
+    result(T&& t, ok_t = {}) noexcept
+        : m_value(ok_v{std::forward<T>(t)})
     {}
 
-    result(const E& e, inaccessible_t = {}) noexcept
-        : m_value(err_t{e})
+    result(const E& e, err_t = {}) noexcept
+        : m_value(err_v{e})
     {}
 
-    result(E&& e, inaccessible_t = {}) noexcept
-        : m_value(err_t{std::forward<E>(e)})
+    result(E&& e, err_t = {}) noexcept
+        : m_value(err_v{std::forward<E>(e)})
     {}
 
     result(result&& r) noexcept = default;
@@ -81,14 +79,14 @@ public:
     [[nodiscard]]
     static result ok(Ok&& t) noexcept
     {
-        return { tag<ok_t>{}, std::forward<T>(t) };
+        return { tag<ok_v>{}, std::forward<T>(t) };
     }
 
     template <typename... Args>
     [[nodiscard]]
     static result emplace_ok(Args&&... args)
     {
-        return { tag<ok_t>{}, std::forward<Args>(args)... };
+        return { tag<ok_v>{}, std::forward<Args>(args)... };
     }
 
     template <
@@ -97,26 +95,26 @@ public:
     [[nodiscard]]
     static result err(Err&& e) noexcept
     {
-        return { tag<err_t>{}, std::forward<E>(e) };
+        return { tag<err_v>{}, std::forward<E>(e) };
     }
 
     template <typename... Args>
     [[nodiscard]]
     static result emplace_err(Args&&... args)
     {
-        return { tag<err_t>{}, std::forward<Args>(args)... };
+        return { tag<err_v>{}, std::forward<Args>(args)... };
     }
 
     [[nodiscard]]
     bool is_ok() const noexcept
     {
-        return m_value.template is<ok_t>();
+        return m_value.template is<ok_v>();
     }
 
     [[nodiscard]]
     bool is_err() const noexcept
     {
-        return m_value.template is<err_t>();
+        return m_value.template is<err_v>();
     }
 
     [[nodiscard]]
@@ -128,25 +126,25 @@ public:
     [[nodiscard]]
     T ok() && noexcept
     {
-        return std::move(m_value).template get_unchecked<ok_t>().value;
+        return std::move(m_value).template get_unchecked<ok_v>().value;
     }
 
     [[nodiscard]]
     const T &ok() const& noexcept
     {
-        return m_value.template get_unchecked<ok_t>().value;
+        return m_value.template get_unchecked<ok_v>().value;
     }
 
     [[nodiscard]]
     E err() && noexcept
     {
-        return std::move(m_value).template get_unchecked<err_t>().value;
+        return std::move(m_value).template get_unchecked<err_v>().value;
     }
 
     [[nodiscard]]
     const E& err() const& noexcept
     {
-        return m_value.template get_unchecked<err_t>().value;
+        return m_value.template get_unchecked<err_v>().value;
     }
 
     template <typename F>
@@ -154,11 +152,11 @@ public:
     {
         using R = result<decltype(f(std::declval<T&&>())), E>;
 
-        if (m_value.template is<ok_t>()) {
-            return R::ok(f(std::move(m_value).template get_unchecked<ok_t>().value));
+        if (m_value.template is<ok_v>()) {
+            return R::ok(f(std::move(m_value).template get_unchecked<ok_v>().value));
         } else {
-            assert(m_value.template is<err_t>());
-            return R::err(std::move(m_value).template get_unchecked<err_t>().value);
+            assert(m_value.template is<err_v>());
+            return R::err(std::move(m_value).template get_unchecked<err_v>().value);
         }
     }
 
@@ -167,11 +165,11 @@ public:
     {
         using R = result<T, decltype(f(std::declval<E&&>()))>;
 
-        if (m_value.template is<ok_t>()) {
-            return R::ok(std::move(m_value).template get_unchecked<ok_t>().value);
+        if (m_value.template is<ok_v>()) {
+            return R::ok(std::move(m_value).template get_unchecked<ok_v>().value);
         } else {
-            assert(m_value.template is<err_t>());
-            return R::err(f(std::move(m_value).template get_unchecked<err_t>().value));
+            assert(m_value.template is<err_v>());
+            return R::err(f(std::move(m_value).template get_unchecked<err_v>().value));
         }
     }
 };

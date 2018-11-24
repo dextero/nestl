@@ -12,6 +12,20 @@ namespace nestl {
 struct ok_t {};
 struct err_t {};
 
+template <typename T>
+struct const_ref {
+    typedef const T& type;
+};
+
+template<> struct const_ref<void> {};
+
+template <typename T>
+struct rvalue_ref {
+    typedef T&& type;
+};
+
+template<> struct rvalue_ref<void> {};
+
 template <
     typename T,
     typename E
@@ -130,7 +144,7 @@ public:
     }
 
     [[nodiscard]]
-    const T &ok() const& noexcept
+    typename const_ref<T>::type ok() const& noexcept
     {
         return m_value.template get_unchecked<ok_v>().value;
     }
@@ -142,7 +156,7 @@ public:
     }
 
     [[nodiscard]]
-    const E& err() const& noexcept
+    typename const_ref<E>::type err() const& noexcept
     {
         return m_value.template get_unchecked<err_v>().value;
     }

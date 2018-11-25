@@ -125,27 +125,33 @@ TEST_CASE("result") {
         REQUIRE(err.is_err());
     }
 
-    SUBCASE("can map void") {
-        result<int, void> o1 =
+    SUBCASE("can map void in Ok state") {
+        result<int, void> o =
             result<void, void>::ok()
                 .map([]() { return 1; });
-        REQUIRE(o1.is_ok());
-        REQUIRE(o1.ok() == 1);
+        REQUIRE(o.is_ok());
+        REQUIRE(o.ok() == 1);
+    }
 
-        result<int, void> o2 =
-            result<void, void>::err()
-                .map([]() { return 1; });
-        REQUIRE(o1.is_err());
-
+    SUBCASE("can map void in Err state") {
         result<void, int> e1 =
             result<void, void>::err()
                 .map_err([]() { return 1; });
         REQUIRE(e1.is_err());
         REQUIRE(e1.err() == 1);
+    }
 
+    SUBCASE("forwards Ok void during map") {
         result<void, int> e2 =
-            result<void, void>::err()
+            result<void, void>::ok()
                 .map_err([]() { return 1; });
         REQUIRE(e2.is_ok());
+    }
+
+    SUBCASE("forwards Err void during map") {
+        result<int, void> o2 =
+            result<void, void>::err()
+                .map([]() { return 1; });
+        REQUIRE(o2.is_err());
     }
 }

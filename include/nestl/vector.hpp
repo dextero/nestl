@@ -19,7 +19,8 @@ public:
     using value_type = typename std::iterator_traits<I>::value_type;
     using pointer = typename std::iterator_traits<I>::pointer;
     using reference = typename std::iterator_traits<I>::reference;
-    using iterator_category = typename std::iterator_traits<I>::iterator_category;
+    using iterator_category =
+        typename std::iterator_traits<I>::iterator_category;
 
 private:
     I m_it;
@@ -98,9 +99,10 @@ private:
     size_t m_capacity = 0;
 
     [[nodiscard]] result<void, out_of_memory> grow(size_t new_size) {
-        if (auto res = m_allocator.reallocate(new_size * sizeof(T))) {
-            m_data = res.ok();
+        if (auto res = m_allocator.reallocate(m_data, new_size * sizeof(T))) {
+            m_data = static_cast<T*>(res.ok());
             m_capacity = new_size;
+            return {ok_t{}};
         } else {
             return {std::move(res).err()};
         }
@@ -121,13 +123,9 @@ private:
         ++m_size;
     }
 
-    enum class compare_result {
-        less,
-        equal,
-        greater
-    };
+    enum class compare_result { less, equal, greater };
 
-   [[nodiscard]] compare_result compare(const vector& other) const {
+    [[nodiscard]] compare_result compare(const vector& other) const {
         auto mismatch = std::mismatch(begin(), end(), other.begin());
         if (mismatch.first == end() && mismatch.second == other.end()) {
             return compare_result::equal;
@@ -139,8 +137,8 @@ private:
         }
     }
 
-public:
-    vector() noexcept : m_allocator() {}
+    public : vector() noexcept
+        : m_allocator() {}
     explicit vector(const Allocator& alloc) noexcept : m_allocator(alloc) {}
 
     // constructors that fill vector with data not provided (allocation may
@@ -158,7 +156,7 @@ public:
     vector(const vector&) = delete;
     vector& operator=(const vector&) = delete;
 
-        [[nodiscard]] result<vector, out_of_memory> copy() noexcept {
+    [[nodiscard]] result<vector, out_of_memory> copy() noexcept {
         vector copy;
         if (auto res = copy.reserve(m_size)) {
             for (const T& e : *this) {
@@ -320,7 +318,7 @@ public:
 
     template <typename It>
     result<iterator, out_of_memory> insert(const_iterator pos, It first,
-                                          It last) noexcept {
+                                           It last) noexcept {
         assert(begin() <= pos && pos <= end());
 
         size_t count = last - first;
@@ -345,7 +343,7 @@ public:
 
     template <typename... Args>
     result<iterator, out_of_memory> emplace(iterator pos,
-                                           Args&&... args) noexcept {
+                                            Args&&... args) noexcept {
         assert(begin() <= pos && pos <= end());
 
         size_t idx = (pos - begin());
@@ -382,22 +380,24 @@ public:
         return erase(const_cast<iterator>(first), const_cast<iterator>(last));
     }
 
-    result<T&, out_of_memory> push_back(T&& e) noexcept {
+    result<std::reference_wrapper<T>, out_of_memory> push_back(T&& e) noexcept {
         return emplace_back(std::forward<T>(e));
     }
 
-    result<T&, out_of_memory> push_back(const T& e) noexcept {
+    result<std::reference_wrapper<T>, out_of_memory> push_back(
+        const T& e) noexcept {
         return emplace_back(e);
     }
 
     template <typename... Args>
-    result<T&, out_of_memory> emplace_back(Args&&... args) noexcept {
+    result<std::reference_wrapper<T>, out_of_memory> emplace_back(
+        Args&&... args) noexcept {
         if (auto res = reserve(size() + 1); !res) {
             return {out_of_memory{}};
         }
 
         emplace_back_unchecked(std::forward<Args>(args)...);
-        return {back()};
+        return {std::reference_wrapper<T>{back()}};
     }
 
     void pop_back() noexcept {

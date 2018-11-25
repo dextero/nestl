@@ -39,33 +39,13 @@ protected:
 
     template <typename... Args>
     result_base(ok_t, Args&&... args)
-        : m_value(ok_v{}, std::forward<Args>(args)...)
+        : m_value(tag<ok_v>{}, std::forward<Args>(args)...)
     {}
 
     template <typename... Args>
     result_base(err_t, Args&&... args)
-        : m_value(err_v{}, std::forward<Args>(args)...)
+        : m_value(tag<err_v>{}, std::forward<Args>(args)...)
     {}
-
-    T&& get(ok_t) && noexcept
-    {
-        return std::move(m_value).template get_unchecked<ok_v>().value;
-    }
-
-    const T& get(ok_t) const&
-    {
-        return m_value.template get_unchecked<ok_v>().value;
-    }
-
-    E&& get(err_t) && noexcept
-    {
-        return std::move(m_value).template get_unchecked<err_v>().value;
-    }
-
-    const E& get(err_t) const&
-    {
-        return m_value.template get_unchecked<err_v>().value;
-    }
 
 public:
     result_base(result_base&& r) noexcept = default;
@@ -106,18 +86,18 @@ template <typename Self, typename T, typename E, typename Base> class with_nonvo
 
 template <typename T, typename E>
 using choose_err = std::conditional_t<
-    std::is_void_v<E>,
-    with_void_err<
-        result<T, E>,
-        T, E,
-        result_base<T, E>
-    >,
-    with_nonvoid_err<
-        result<T, E>,
-        T, E,
-        result_base<T, E>
-    >
->;
+        std::is_void_v<E>,
+        with_void_err<
+            result<T, E>,
+            T, E,
+            result_base<T, E>
+        >,
+        with_nonvoid_err<
+            result<T, E>,
+            T, E,
+            result_base<T, E>
+        >
+    >;
 
 template <typename T, typename E>
 using choose_ok = std::conditional_t<
@@ -135,11 +115,17 @@ using choose_ok = std::conditional_t<
     >;
 
 template <typename T, typename F>
-using Mapped = std::conditional_t<
-    std::is_void_v<T>,
-    decltype(std::declval<F>()(std::declval<T>())),
-    decltype(std::declval<F>()())
->;
+struct mapped {
+    typedef decltype(std::declval<F>()(std::declval<T>())) type;
+};
+
+template <typename F>
+struct mapped<void, F> {
+    typedef decltype(std::declval<F>()()) type;
+};
+
+template <typename T, typename F>
+using mapped_t = typename mapped<T, F>::type;
 
 template <
     typename Self,
@@ -153,7 +139,15 @@ class with_nonvoid_ok : public Base
 
 protected:
     with_nonvoid_ok(T&& t) noexcept
-        : Base(ok_t{}, std::forward<T>(t))
+        : Base(ok_t{}, std::move(t))
+    {}
+
+    with_nonvoid_ok(T& t) noexcept
+        : Base(ok_t{}, t)
+    {}
+
+    with_nonvoid_ok(const T& t) noexcept
+        : Base(ok_t{}, t)
     {}
 
     template <typename... Args>
@@ -163,22 +157,22 @@ protected:
 
     template <typename F>
     [[nodiscard]]
-    static auto map_ok(Self&& self, F&& f) noexcept
-        -> result<Mapped<T, F>, E>
+    auto map_ok(F&& f) && noexcept
+        -> result<mapped_t<T, F>, E>
     {
-        using R = result<Mapped<T, F>, E>;
+        using R = result<mapped_t<T, F>, E>;
 
-        return R::ok(f(std::move(self).ok()));
+        return R::ok(f(std::move(*this).ok()));
     }
 
     template <typename F>
     [[nodiscard]]
-    static auto forward_ok(Self&& self, F&& f) noexcept
-        -> result<T, Mapped<E, F>>
+    auto forward_ok(F&& f) && noexcept
+        -> result<T, mapped_t<E, F>>
     {
-        using R = result<T, Mapped<E, F>>;
+        using R = result<T, mapped_t<E, F>>;
 
-        return R::ok(std::move(self).ok());
+        return R::ok(std::move(*this).ok());
     }
 
 public:
@@ -198,13 +192,13 @@ public:
     [[nodiscard]]
     T ok() && noexcept
     {
-        return std::move(this->m_value).get(ok_t{});
+        return std::move(this->m_value).template get_unchecked<typename Base::ok_v>().value;
     }
 
     [[nodiscard]]
     const T& ok() const& noexcept
     {
-        return this->m_value.get(ok_t{});
+        return this->m_value.template get_unchecked<typename Base::ok_v>().value;
     }
 };
 
@@ -226,20 +220,20 @@ protected:
 
     template <typename F>
     [[nodiscard]]
-    static auto map_ok(Self&& self, F&& f) noexcept
-        -> result<decltype(std::declval<F>()()), E>
+    auto map_ok(F&& f) && noexcept
+        -> result<mapped_t<T, F>, E>
     {
-        using R = result<decltype(std::declval<F>()()), E>;
+        using R = result<mapped_t<T, F>, E>;
 
         return R::ok(f());
     }
 
     template <typename F>
     [[nodiscard]]
-    static auto forward_ok(Self&&, F&&) noexcept
-        -> result<decltype(std::declval<F>()()), E>
+    auto forward_ok(F&&) && noexcept
+        -> result<T, mapped_t<E, F>>
     {
-        using R = result<decltype(std::declval<F>()()), E>;
+        using R = result<T, mapped_t<E, F>>;
 
         return R::ok();
     }
@@ -264,7 +258,15 @@ class with_nonvoid_err : public Base
 
 protected:
     with_nonvoid_err(E&& e) noexcept
-        : Base(err_t{}, std::forward<E>(e))
+        : Base(err_t{}, std::move(e))
+    {}
+
+    with_nonvoid_err(E& e) noexcept
+        : Base(err_t{}, e)
+    {}
+
+    with_nonvoid_err(const E& e) noexcept
+        : Base(err_t{}, e)
     {}
 
     template <typename... Args>
@@ -274,22 +276,22 @@ protected:
 
     template <typename F>
     [[nodiscard]]
-    static auto map_err(Self&& self, F&& f) noexcept
-        -> result<T, Mapped<E, F>>
+    auto map_err(F&& f) && noexcept
+        -> result<T, mapped_t<E, F>>
     {
-        using R = result<T, Mapped<E, F>>;
+        using R = result<T, mapped_t<E, F>>;
 
-        return R::err(f(get_err(std::move(self))));
+        return R::err(f(std::move(*this).err()));
     }
 
     template <typename F>
     [[nodiscard]]
-    static auto forward_err(Self&& self, F&& f) noexcept
-        -> result<Mapped<T, F>, E>
+    auto forward_err(F&& f) && noexcept
+        -> result<mapped_t<T, F>, E>
     {
-        using R = result<Mapped<T, F>, E>;
+        using R = result<mapped_t<T, F>, E>;
 
-        return R::err(std::move(self).err());
+        return R::err(std::move(*this).err());
     }
 
 public:
@@ -309,13 +311,13 @@ public:
     [[nodiscard]]
     E err() && noexcept
     {
-        return std::move(this->m_value).get(err_t{});
+        return std::move(this->m_value).template get_unchecked<typename Base::err_v>().value;
     }
 
     [[nodiscard]]
     const E& err() const& noexcept
     {
-        return this->m_value.get(err_t{});
+        return this->m_value.template get_unchecked<typename Base::err_v>().value;
     }
 };
 
@@ -336,19 +338,19 @@ protected:
     {}
 
     template <typename F>
-    static auto map_err(F&& f) noexcept
-        -> result<T, Mapped<E, F>>
+    auto map_err(F&& f) && noexcept
+        -> result<T, mapped_t<E, F>>
     {
-        using R = result<T, Mapped<E, F>>;
+        using R = result<T, mapped_t<E, F>>;
 
         return R::err(f());
     }
 
     template <typename F>
-    static auto forward_err(F&&) noexcept
-        -> result<Mapped<T, F>, E>
+    auto forward_err(F&&) && noexcept
+        -> result<mapped_t<T, F>, E>
     {
-        using R = result<Mapped<T, F>, E>;
+        using R = result<mapped_t<T, F>, E>;
 
         return R::err();
     }
@@ -379,25 +381,25 @@ public:
 
     template <typename F>
     auto map(F&& f) && noexcept
-        -> result<Mapped<T, F>, E>
+        -> result<mapped_t<T, F>, E>
     {
         if (this->is_ok()) {
-            return std::move(*this).map_ok();
+            return std::move(*this).map_ok(std::forward<F>(f));
         } else {
             assert(this->is_err());
-            return std::move(*this).forward_err();
+            return std::move(*this).forward_err(std::forward<F>(f));
         }
     }
 
     template <typename F>
     auto map_err(F&& f) &&
-        -> result<T, Mapped<E, F>>
+        -> result<T, mapped_t<E, F>>
     {
         if (this->is_ok()) {
-            return std::move(*this).forward_ok(f);
+            return std::move(*this).forward_ok(std::forward<F>(f));
         } else {
             assert(this->is_err());
-            return std::move(*this).map_err(f);
+            return std::move(*this).map_err(std::forward<F>(f));
         }
     }
 };

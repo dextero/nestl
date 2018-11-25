@@ -42,12 +42,12 @@ protected:
     variant m_value;
 
     template <typename... Args>
-    result_base(ok_t, Args&&... args)
+    result_base(ok_t, Args&&... args) noexcept
         : m_value(tag<ok_v>{}, std::forward<Args>(args)...)
     {}
 
     template <typename... Args>
-    result_base(err_t, Args&&... args)
+    result_base(err_t, Args&&... args) noexcept
         : m_value(tag<err_v>{}, std::forward<Args>(args)...)
     {}
 
@@ -306,7 +306,7 @@ public:
 
     template <typename... Args>
     [[nodiscard]]
-    static Self emplace_err(Args&&... args)
+    static Self emplace_err(Args&&... args) noexcept
     {
         return { err_t{}, std::forward<Args>(args)... };
     }
@@ -378,8 +378,8 @@ public:
         : detail::choose_ok<T, E>(std::forward<Args>(args)...)
     {}
 
-    result(result&&) = default;
-    result& operator =(result&&) = default;
+    result(result&&) noexcept = default;
+    result& operator =(result&&) noexcept = default;
 
     result(const result&) = delete;
     result& operator =(const result&) = delete;

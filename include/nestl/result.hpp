@@ -19,7 +19,7 @@ namespace detail {
 
 template <typename T, typename E>
 class result_base {
-   protected:
+protected:
     template <typename Tag, typename V>
     struct wrapper {
         V value;
@@ -47,7 +47,7 @@ class result_base {
     result_base(err_t, Args&&... args) noexcept
         : m_value(tag<err_v>{}, std::forward<Args>(args)...) {}
 
-   public:
+public:
     result_base(result_base&& r) noexcept = default;
     result_base& operator=(result_base&& r) noexcept = default;
 
@@ -105,7 +105,7 @@ template <typename Self, typename T, typename E, typename Base>
 class with_nonvoid_ok : public Base {
     static_assert(!std::is_void_v<T>);
 
-   protected:
+protected:
     with_nonvoid_ok(T&& t) noexcept : Base(ok_t{}, std::move(t)) {}
 
     with_nonvoid_ok(T& t) noexcept : Base(ok_t{}, t) {}
@@ -132,7 +132,7 @@ class with_nonvoid_ok : public Base {
         return R::ok(std::move(*this).ok());
     }
 
-   public:
+public:
     [[nodiscard]] static Self ok(T&& t) noexcept {
         return {ok_t{}, std::forward<T>(t)};
     }
@@ -158,7 +158,7 @@ template <typename Self, typename T, typename E, typename Base>
 class with_void_ok : public Base {
     static_assert(std::is_void_v<T>);
 
-   protected:
+protected:
     template <typename... Args>
     with_void_ok(Args&&... args) noexcept : Base(std::forward<Args>(args)...) {}
 
@@ -178,7 +178,7 @@ class with_void_ok : public Base {
         return R::ok();
     }
 
-   public:
+public:
     [[nodiscard]] static Self ok() noexcept { return {ok_t{}}; }
 };
 
@@ -186,7 +186,7 @@ template <typename Self, typename T, typename E, typename Base>
 class with_nonvoid_err : public Base {
     static_assert(!std::is_void_v<E>);
 
-   protected:
+protected:
     with_nonvoid_err(E&& e) noexcept : Base(err_t{}, std::move(e)) {}
 
     with_nonvoid_err(E& e) noexcept : Base(err_t{}, e) {}
@@ -213,7 +213,7 @@ class with_nonvoid_err : public Base {
         return R::err(std::move(*this).err());
     }
 
-   public:
+public:
     [[nodiscard]] static Self err(E&& e) noexcept {
         return {err_t{}, std::forward<E>(e)};
     }
@@ -239,7 +239,7 @@ template <typename Self, typename T, typename E, typename Base>
 class with_void_err : public Base {
     static_assert(std::is_void_v<E>);
 
-   protected:
+protected:
     template <typename... Args>
     with_void_err(Args&&... args) noexcept
         : Base(std::forward<Args>(args)...) {}
@@ -258,7 +258,7 @@ class with_void_err : public Base {
         return R::err();
     }
 
-   public:
+public:
     [[nodiscard]] static Self err() noexcept { return {err_t{}}; }
 };
 
@@ -266,7 +266,7 @@ class with_void_err : public Base {
 
 template <typename T, typename E>
 class result final : public detail::choose_ok<T, E> {
-   public:
+public:
     template <typename... Args>
     result(Args&&... args) noexcept
         : detail::choose_ok<T, E>(std::forward<Args>(args)...) {}

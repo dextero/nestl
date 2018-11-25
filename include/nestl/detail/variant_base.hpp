@@ -12,7 +12,7 @@ namespace detail {
 
 template <typename... Ts>
 class variant_base {
-   public:
+public:
     template <typename T,
               typename = std::enable_if_t<is_one_of<std::decay_t<T>, Ts...>>>
     variant_base(T&& t) noexcept
@@ -63,7 +63,7 @@ class variant_base {
         return type_index<T, Ts...> == m_current;
     }
 
-   protected:
+protected:
     uint8_t m_current = static_cast<uint8_t>(invalid_type_index);
     detail::storage<Ts...> m_storage;
 
@@ -121,7 +121,7 @@ class variant_base {
 
 template <typename... Ts>
 class unchecked_variant final : public variant_base<Ts...> {
-   public:
+public:
     template <typename... Args>
     unchecked_variant(Args&&... args) noexcept
         : variant_base<Ts...>(std::forward<Args>(args)...) {}

@@ -11,7 +11,7 @@ struct variant_type_error {};
 
 template <typename... Ts>
 struct variant final : public detail::variant_base<Ts...> {
-   public:
+public:
     template <typename... Args>
     variant(Args&&... args) noexcept
         : detail::variant_base<Ts...>(std::forward<Args>(args)...) {}
@@ -42,7 +42,7 @@ struct variant final : public detail::variant_base<Ts...> {
         return const_cast<variant*>(this)->get_impl<const T, 0, Ts...>();
     }
 
-   private:
+private:
     template <typename T, size_t N, typename First, typename... Rest>
     [[nodiscard]] inline result<std::reference_wrapper<T>, variant_type_error>
     get_impl() noexcept {

@@ -7,7 +7,7 @@ namespace detail {
 
 template <typename... Args>
 class storage {
-   public:
+public:
     alignas(max_alignment<Args...>) unsigned char data[max_sizeof<Args...>];
 
     storage() = default;
@@ -46,7 +46,7 @@ class storage {
         destroy_impl<T, Args...>();
     }
 
-   private:
+private:
     template <typename Query, typename T, typename... Ts>
     void destroy_impl() {
         if (std::is_same_v<Query, T>) {

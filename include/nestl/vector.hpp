@@ -9,10 +9,88 @@
 #include <nestl/result.hpp>
 
 namespace nestl {
+
 class out_of_bounds {};
+
+template <typename I>
+class reverse_iterator {
+public:
+    using difference_type = std::iterator_traits<I>::difference_type;
+    using value_type = std::iterator_traits<I>::value_type;
+    using pointer = std::iterator_traits<I>::pointer;
+    using reference = std::iterator_traits<I>::reference;
+    using iterator_category = std::iterator_traits<I>::iterator_category;
+
+private:
+    I m_it;
+
+public:
+    reverse_iterator() = delete;
+
+    reverse_iterator(I it) : m_it(it) {}
+
+    reverse_iterator(reverse_iterator&&) = default;
+    reverse_iterator& operator=(reverse_iterator&&) = default;
+
+    reverse_iterator(const reverse_iterator&) = default;
+    reverse_iterator& operator=(const reverse_iterator&) = default;
+
+    reverse_iterator& operator++() noexcept {
+        --m_it;
+        return *this;
+    }
+
+    reverse_iterator operator++(int) const noexcept {
+        auto copy = *this;
+        --m_it;
+        return copy;
+    }
+
+    reverse_iterator& operator--() noexcept {
+        ++m_it;
+        return *this;
+    }
+
+    reverse_iterator operator--(int) const noexcept {
+        auto copy = *this;
+        ++m_it;
+        return copy;
+    }
+
+    bool operator==(const reverse_iterator& other) const noexcept {
+        return m_it == other.m_it;
+    }
+
+    bool operator!=(const reverse_iterator& other) const noexcept {
+        return m_it != other.m_it;
+    }
+
+    auto operator-(const reverse_iterator& other) const noexcept
+        -> decltype(m_it - other.m_it) {
+        return m_it - other.m_it;
+    }
+
+    auto operator*() const noexcept -> decltype(*m_it) { return *m_it; }
+
+    I operator->() const noexcept { return m_it; }
+};
 
 template <typename T, typename Allocator>
 class vector {
+public:
+    using value_type = T;
+    using allocator_type = Allocator;
+    using size_type = size_t;
+    using difference_type = ptrdiff_t;
+    using reference = value_type&;
+    using const_reference = const value_type&;
+    using pointer = value_type*;
+    using const_pointer = const value_type*;
+    using iterator = pointer;
+    using const_iterator = const_pointer;
+    using reverse_iterator = reverse_iterator<iterator>;
+    using const_reverse_iterator = reverse_iterator<const_iterator>;
+
 private:
     Allocator m_allocator;
     T* m_data = nullptr;
@@ -90,8 +168,31 @@ public:
         }
     }
 
-    // TODO: assign()
-    // TODO: get_allocator()
+    result<void, out_of_memory> assign(size_t count, const T& value) noexcept {
+        if (auto res = reserve(count); !res) {
+            return {res.err()};
+        }
+
+        clear();
+        return insert(end(), count, value);
+    }
+
+    template <typename It>
+    result<void, out_of_memory> assign(It first, It last) noexcept {
+        if (auto res = reserve(last - first); !res) {
+            return {res.err()};
+        }
+
+        clear();
+        return insert(end(), first, last);
+    }
+
+    result<void, out_of_memory> assign(
+        std::initializer_list<T> ilist) noexcept {
+        return assign(ilist.begin(), ilist.end());
+    }
+
+    allocator_type get_allocator() const noexcept { return m_allocator; }
 
     ~vector() noexcept {
         clear();
@@ -131,18 +232,36 @@ public:
     [[nodiscard]] T* data() noexcept { return m_data; }
     [[nodiscard]] const T* data() const noexcept { return m_data; }
 
-    [[nodiscard]] T* begin() noexcept { return m_data; }
-    [[nodiscard]] const T* begin() const noexcept { return m_data; }
-    [[nodiscard]] const T* cbegin() const noexcept { return begin(); }
+    [[nodiscard]] iterator begin() noexcept { return m_data; }
+    [[nodiscard]] const_iterator begin() const noexcept { return m_data; }
+    [[nodiscard]] const_iterator cbegin() const noexcept { return begin(); }
 
-    [[nodiscard]] T* end() {
+    [[nodiscard]] iterator end() {
         return m_data + m_size;
-    }[[nodiscard]] const T* end() const noexcept {
+    }[[nodiscard]] const_iterator end() const noexcept {
         return m_data + m_size;
     }
-    [[nodiscard]] const T* cend() const noexcept { return end(); }
+    [[nodiscard]] const_iterator cend() const noexcept { return end(); }
 
-    // TODO: rbegin/crbegin/rend/crend
+    [[nodiscard]] reverse_iterator rbegin() noexcept {
+        return reverse_iterator<iterator>{end() - 1};
+    }
+    [[nodiscard]] const_reverse_iterator rbegin() const noexcept {
+        return reverse_iterator<const_iterator>{end() - 1};
+    }
+    [[nodiscard]] const_reverse_iterator crbegin() const noexcept {
+        return rbegin();
+    }
+
+    [[nodiscard]] reverse_iterator rend() noexcept {
+        return reverse_iterator<iterator>{begin() - 1};
+    }
+    [[nodiscard]] const_reverse_iterator rend() const noexcept {
+        return reverse_iterator<const_iterator>{begin() - 1};
+    }
+    [[nodiscard]] const_reverse_iterator crend() const noexcept {
+        return rend();
+    }
 
     [[nodiscard]] bool empty() const noexcept { return m_size == 0; }
     [[nodiscard]] size_t max_size() const noexcept {
@@ -166,20 +285,21 @@ public:
 
     void clear() { erase(begin()); }
 
-    result<T*, out_of_memory> insert(T* pos, const T& e) noexcept {
+    result<iterator, out_of_memory> insert(iterator pos, const T& e) noexcept {
         return emplace(pos, e);
     }
 
-    result<T*, out_of_memory> insert(const T* pos, const T& e) noexcept {
+    result<iterator, out_of_memory> insert(const_iterator pos,
+                                           const T& e) noexcept {
         return emplace(pos, e);
     }
 
-    result<T*, out_of_memory> insert(const T* pos, T&& e) noexcept {
+    result<iterator, out_of_memory> insert(const_iterator pos, T&& e) noexcept {
         return emplace(pos, std::move(e));
     }
 
-    result<T*, out_of_memory> insert(const T* pos, size_t count,
-                                     const T& e) noexcept {
+    result<iterator, out_of_memory> insert(const_iterator pos, size_t count,
+                                           const T& e) noexcept {
         assert(begin() <= pos && pos <= end());
 
         size_t idx = (pos - begin());
@@ -197,7 +317,8 @@ public:
     }
 
     template <typename It>
-    result<T*, out_of_memory> insert(const T* pos, It first, It last) noexcept {
+    result<iterator out_of_memory> insert(const_iterator pos, It first,
+                                          It last) noexcept {
         assert(begin() <= pos && pos <= end());
 
         size_t count = last - first;
@@ -208,20 +329,21 @@ public:
 
         pos = begin() + idx;
         std::copy_backward(pos, end(), end() + count);
-        for (T* at = pos; first != last; ++first, ++pos) {
+        for (iterator at = pos; first != last; ++first, ++pos) {
             new (pos) T(*first);
         }
 
         return {pos};
     }
 
-    result<T*, out_of_memory> insert(const T* pos,
-                                     std::initializer_list<T> ilist) noexcept {
+    result<iterator out_of_memory> insert(
+        const_iterator pos, std::initializer_list<T> ilist) noexcept {
         return insert(pos, ilist.begin(), ilist.end());
     }
 
     template <typename... Args>
-    result<T*, out_of_memory> emplace(T* pos, Args&&... args) noexcept {
+    result<iterator out_of_memory> emplace(iterator pos,
+                                           Args&&... args) noexcept {
         assert(begin() <= pos && pos <= end());
 
         size_t idx = (pos - begin());
@@ -235,15 +357,17 @@ public:
         return {pos};
     }
 
-    T* erase(T* pos) noexcept { return erase(pos, end()); }
+    iterator erase(iterator pos) noexcept { return erase(pos, end()); }
 
-    T* erase(const T* pos) noexcept { return erase(const_cast<T*>(pos)); }
+    iterator erase(const_iterator pos) noexcept {
+        return erase(const_cast<iterator>(pos));
+    }
 
-    T* erase(T* first, T* last) noexcept {
+    iterator erase(iterator first, iterator last) noexcept {
         assert(begin() <= pos && pos <= end());
 
         size_t count = last - first;
-        for (T* p = first; p != last; ++p) {
+        for (iterator p = first; p != last; ++p) {
             p->~T();
         }
 
@@ -251,8 +375,8 @@ public:
         return first;
     }
 
-    T* erase(const T* first, const T* last) noexcept {
-        return erase(const_cast<T*>(first), const_cast<T*>(last));
+    iterator erase(const_iterator first, const_iterator last) noexcept {
+        return erase(const_cast<iterator>(first), const_cast<iterator>(last));
     }
 
     result<T&, out_of_memory> push_back(T&& e) noexcept {

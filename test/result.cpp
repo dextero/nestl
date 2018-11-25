@@ -95,7 +95,7 @@ TEST_CASE("result") {
 
     SUBCASE("map is a noop in Err state") {
         result<Mock, Mock> a =
-            result<Mock, Mock>::emplace_err(Mock::make().expect_moves(2))
+            result<Mock, Mock>::emplace_err(Mock::make().expect_moves(3))
                 .map([](Mock&&) {
                          FAIL("should not be called");
                          return Mock::make();
@@ -110,7 +110,7 @@ TEST_CASE("result") {
 
     SUBCASE("map_err is a noop in Ok state") {
         result<Mock, Mock> a =
-            result<Mock, Mock>::emplace_ok(Mock::make().expect_moves(2))
+            result<Mock, Mock>::emplace_ok(Mock::make().expect_moves(3))
                 .map_err([](Mock&&) {
                              FAIL("should not be called");
                              return Mock::make();

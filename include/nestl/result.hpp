@@ -157,7 +157,7 @@ protected:
 
     template <typename F>
     [[nodiscard]]
-    auto map_ok(F&& f) && noexcept
+    auto map_ok_impl(F&& f) && noexcept
         -> result<mapped_t<T, F>, E>
     {
         using R = result<mapped_t<T, F>, E>;
@@ -220,7 +220,7 @@ protected:
 
     template <typename F>
     [[nodiscard]]
-    auto map_ok(F&& f) && noexcept
+    auto map_ok_impl(F&& f) && noexcept
         -> result<mapped_t<T, F>, E>
     {
         using R = result<mapped_t<T, F>, E>;
@@ -276,7 +276,7 @@ protected:
 
     template <typename F>
     [[nodiscard]]
-    auto map_err(F&& f) && noexcept
+    auto map_err_impl(F&& f) && noexcept
         -> result<T, mapped_t<E, F>>
     {
         using R = result<T, mapped_t<E, F>>;
@@ -338,7 +338,7 @@ protected:
     {}
 
     template <typename F>
-    auto map_err(F&& f) && noexcept
+    auto map_err_impl(F&& f) && noexcept
         -> result<T, mapped_t<E, F>>
     {
         using R = result<T, mapped_t<E, F>>;
@@ -384,7 +384,7 @@ public:
         -> result<mapped_t<T, F>, E>
     {
         if (this->is_ok()) {
-            return std::move(*this).map_ok(std::forward<F>(f));
+            return std::move(*this).map_ok_impl(std::forward<F>(f));
         } else {
             assert(this->is_err());
             return std::move(*this).forward_err(std::forward<F>(f));
@@ -399,7 +399,7 @@ public:
             return std::move(*this).forward_ok(std::forward<F>(f));
         } else {
             assert(this->is_err());
-            return std::move(*this).map_err(std::forward<F>(f));
+            return std::move(*this).map_err_impl(std::forward<F>(f));
         }
     }
 };

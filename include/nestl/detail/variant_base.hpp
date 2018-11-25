@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstddef>
+#include <cstdint>
 #include <type_traits>
 
 #include <nestl/utility.hpp>
@@ -60,7 +61,7 @@ public:
 
     ~variant_base() noexcept {
         destruct<0, Ts...>();
-        m_current = invalid_type_index;
+        m_current = static_cast<uint8_t>(invalid_type_index);
     }
 
     template <typename T>
@@ -71,10 +72,10 @@ public:
     }
 
 protected:
-    size_t m_current = invalid_type_index;
+    uint8_t m_current = static_cast<uint8_t>(invalid_type_index);
     detail::storage<Ts...> m_storage;
 
-    template <size_t N, typename T, typename... Rest>
+    template <uint8_t N, typename T, typename... Rest>
     inline void destruct() noexcept {
         if (m_current == N) {
             m_storage.template destroy<T>();
@@ -83,43 +84,45 @@ protected:
         }
     }
 
-    template <size_t>
+    template <uint8_t>
     inline void destruct() {}
 
     inline void move_into(variant_base& dst) noexcept {
         move_into_impl<0, Ts...>(dst);
     }
 
-    template <size_t N, typename T, typename... Rest>
+    template <uint8_t N, typename T, typename... Rest>
     inline void move_into_impl(variant_base& dst) noexcept {
         if (m_current == N) {
             dst.~variant_base();
             new (&dst) variant_base(tag<T>{}, std::move(m_storage.template as<T>()));
             this->~variant_base();
-            m_current = invalid_type_index;
+            m_current = static_cast<uint8_t>(invalid_type_index);
         } else {
+            static_assert(N < std::numeric_limits<uint8_t>::max());
             move_into_impl<N + 1, Rest...>(dst);
         }
     }
 
-    template <size_t>
+    template <uint8_t>
     inline void move_into_impl(variant_base&) noexcept {}
 
     inline void copy_into(variant_base& dst) const noexcept {
         copy_into_impl<0, Ts...>(dst);
     }
 
-    template <size_t N, typename T, typename... Rest>
+    template <uint8_t N, typename T, typename... Rest>
     inline void copy_into_impl(variant_base& dst) const noexcept {
         if (m_current == N) {
             dst.~variant_base();
             new (&dst) variant_base(tag<T>{}, m_storage.template as<T>());
+            static_assert(N < std::numeric_limits<uint8_t>::max());
         } else {
             copy_into_impl<N + 1, Rest...>(dst);
         }
     }
 
-    template <size_t>
+    template <uint8_t>
     inline void copy_into_impl(variant_base&) const noexcept {}
 };
 

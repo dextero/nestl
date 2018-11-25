@@ -154,4 +154,10 @@ TEST_CASE("result") {
                 .map([]() { return 1; });
         REQUIRE(o2.is_err());
     }
+
+    SUBCASE("does not introduce unnecessary memory overhead") {
+        REQUIRE(sizeof(result<void, void>) <= 2);
+        REQUIRE(sizeof(result<int, int>) <= sizeof(int) + alignof(int));
+        REQUIRE(sizeof(result<double, int>) <= sizeof(double) + alignof(double));
+    }
 }

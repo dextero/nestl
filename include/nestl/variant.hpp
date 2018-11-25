@@ -61,7 +61,7 @@ private:
     {
         if (this->m_current == N) {
             if (std::is_same_v<std::remove_const_t<T>, First>) {
-                return { this->m_storage.template as<std::remove_const_t<T>>() };
+                return { std::reference_wrapper<T>{this->m_storage.template as<std::remove_const_t<T>>()} };
             } else {
                 return { variant_type_error {} };
             }

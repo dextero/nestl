@@ -6,24 +6,24 @@ struct Movable {
     Movable() = default;
 
     Movable(Movable&&) = default;
-    Movable& operator =(Movable&&) = default;
+    Movable& operator=(Movable&&) = default;
 
     Movable(const Movable&) = delete;
-    Movable& operator =(const Movable&) = delete;
+    Movable& operator=(const Movable&) = delete;
 };
 
 struct Copyable {
     Copyable() = default;
 
     Copyable(Copyable&&) = delete;
-    Copyable& operator =(Copyable&&) = delete;
+    Copyable& operator=(Copyable&&) = delete;
 
     Copyable(const Copyable&) = default;
-    Copyable& operator =(const Copyable&) = default;
+    Copyable& operator=(const Copyable&) = default;
 };
 
 struct Mock {
-    struct summon_t{};
+    struct summon_t {};
     struct Control {
         size_t expected_moves = 0;
         size_t expected_copies = 0;
@@ -50,7 +50,7 @@ struct Mock {
     }
 
     Mock(summon_t) : control(std::make_shared<Control>()) {}
-    static Mock make() { return { summon_t{} }; }
+    static Mock make() { return {summon_t{}}; }
 
     Mock(Mock&& src) {
         if (src.control->expected_moves == 0) {
@@ -59,7 +59,7 @@ struct Mock {
         *this = std::move(src);
     }
 
-    Mock& operator =(Mock&& src) {
+    Mock& operator=(Mock&& src) {
         control = src.control;
         if (control->expected_moves-- == 0) {
             FAIL("unexpected move-assign call");
@@ -74,7 +74,7 @@ struct Mock {
         *this = src;
     }
 
-    Mock& operator =(const Mock& src) {
+    Mock& operator=(const Mock& src) {
         control = src.control;
         if (control->expected_copies-- == 0) {
             FAIL("unexpected copy-assign call");
@@ -83,4 +83,4 @@ struct Mock {
     }
 };
 
-}
+}  // namespace

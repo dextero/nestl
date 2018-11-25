@@ -1,7 +1,7 @@
 #include <nestl/variant.hpp>
 
-#include <memory>
 #include <cstring>
+#include <memory>
 
 #include <doctest.h>
 
@@ -53,7 +53,7 @@ TEST_CASE("variant") {
 
         const char *foo = "foo";
         auto v2 = variant<int, const char *>{foo};
-        REQUIRE(v2.get<const char*>().ok() == foo);
+        REQUIRE(v2.get<const char *>().ok() == foo);
 
         auto v3 = variant<int, const char *, Test>{1};
         REQUIRE(v3.get<int>().ok() == 1);

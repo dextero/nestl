@@ -88,33 +88,31 @@ TEST_CASE("result") {
     }
 
     SUBCASE("can map Ok") {
-        result<int, Mock> a =
-            result<Movable, Mock>::emplace_ok()
-                .map([](Movable&&) { return 0; });
+        result<int, Mock> a = result<Movable, Mock>::emplace_ok().map(
+            [](Movable &&) { return 0; });
     }
 
     SUBCASE("map is a noop in Err state") {
         result<Mock, Mock> a =
             result<Mock, Mock>::emplace_err(Mock::make().expect_moves(3))
-                .map([](Mock&&) {
-                         FAIL("should not be called");
-                         return Mock::make();
-                     });
+                .map([](Mock &&) {
+                    FAIL("should not be called");
+                    return Mock::make();
+                });
     }
 
     SUBCASE("can map_err Err") {
-        result<Mock, int> a =
-            result<Mock, Movable>::emplace_err()
-                .map_err([](Movable&&) { return 0; });
+        result<Mock, int> a = result<Mock, Movable>::emplace_err().map_err(
+            [](Movable &&) { return 0; });
     }
 
     SUBCASE("map_err is a noop in Ok state") {
         result<Mock, Mock> a =
             result<Mock, Mock>::emplace_ok(Mock::make().expect_moves(3))
-                .map_err([](Mock&&) {
-                             FAIL("should not be called");
-                             return Mock::make();
-                         });
+                .map_err([](Mock &&) {
+                    FAIL("should not be called");
+                    return Mock::make();
+                });
     }
 
     SUBCASE("can hold void") {
@@ -126,38 +124,34 @@ TEST_CASE("result") {
     }
 
     SUBCASE("can map void in Ok state") {
-        result<int, void> o =
-            result<void, void>::ok()
-                .map([]() { return 1; });
+        result<int, void> o = result<void, void>::ok().map([]() { return 1; });
         REQUIRE(o.is_ok());
         REQUIRE(o.ok() == 1);
     }
 
     SUBCASE("can map void in Err state") {
         result<void, int> e1 =
-            result<void, void>::err()
-                .map_err([]() { return 1; });
+            result<void, void>::err().map_err([]() { return 1; });
         REQUIRE(e1.is_err());
         REQUIRE(e1.err() == 1);
     }
 
     SUBCASE("forwards Ok void during map") {
         result<void, int> e2 =
-            result<void, void>::ok()
-                .map_err([]() { return 1; });
+            result<void, void>::ok().map_err([]() { return 1; });
         REQUIRE(e2.is_ok());
     }
 
     SUBCASE("forwards Err void during map") {
         result<int, void> o2 =
-            result<void, void>::err()
-                .map([]() { return 1; });
+            result<void, void>::err().map([]() { return 1; });
         REQUIRE(o2.is_err());
     }
 
     SUBCASE("does not introduce unnecessary memory overhead") {
         REQUIRE(sizeof(result<void, void>) <= 2);
         REQUIRE(sizeof(result<int, int>) <= sizeof(int) + alignof(int));
-        REQUIRE(sizeof(result<double, int>) <= sizeof(double) + alignof(double));
+        REQUIRE(sizeof(result<double, int>) <=
+                sizeof(double) + alignof(double));
     }
 }

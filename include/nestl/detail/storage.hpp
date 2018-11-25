@@ -7,16 +7,16 @@ namespace detail {
 
 template <typename... Args>
 class storage {
-public:
+   public:
     alignas(max_alignment<Args...>) unsigned char data[max_sizeof<Args...>];
 
     storage() = default;
 
     storage(storage&&) = default;
-    storage& operator =(storage&&) = default;
+    storage& operator=(storage&&) = default;
 
     storage(const storage&) = delete;
-    storage& operator =(const storage&) = delete;
+    storage& operator=(const storage&) = delete;
 
     template <typename T, typename... CtorArgs>
     storage(tag<T>, CtorArgs&&... args) {
@@ -46,7 +46,7 @@ public:
         destroy_impl<T, Args...>();
     }
 
-private:
+   private:
     template <typename Query, typename T, typename... Ts>
     void destroy_impl() {
         if (std::is_same_v<Query, T>) {
@@ -60,5 +60,5 @@ private:
     void destroy_impl() {}
 };
 
-} // namespace detail
-} // namespace nestl
+}  // namespace detail
+}  // namespace nestl

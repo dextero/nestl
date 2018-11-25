@@ -12,6 +12,10 @@ namespace nestl {
 struct ok_t {};
 struct err_t {};
 
+template <typename T, typename E> class result;
+
+namespace detail {
+
 template <typename T, typename E>
 class result_base
 {
@@ -78,7 +82,6 @@ public:
     }
 };
 
-template <typename T, typename E> class result;
 template <typename Self, typename T, typename E, typename Base> class with_void_ok;
 template <typename Self, typename T, typename E, typename Base> class with_nonvoid_ok;
 template <typename Self, typename T, typename E, typename Base> class with_void_err;
@@ -363,14 +366,16 @@ public:
     }
 };
 
+} // namespace detail
+
 template <typename T, typename E>
 class result final
-    : public choose_ok<T, E>
+    : public detail::choose_ok<T, E>
 {
 public:
     template <typename... Args>
     result(Args&&... args) noexcept
-        : choose_ok<T, E>(std::forward<Args>(args)...)
+        : detail::choose_ok<T, E>(std::forward<Args>(args)...)
     {}
 
     result(result&&) = default;
@@ -381,7 +386,7 @@ public:
 
     template <typename F>
     auto map(F&& f) && noexcept
-        -> result<mapped_t<T, F>, E>
+        -> result<detail::mapped_t<T, F>, E>
     {
         if (this->is_ok()) {
             return std::move(*this).map_ok_impl(std::forward<F>(f));
@@ -393,7 +398,7 @@ public:
 
     template <typename F>
     auto map_err(F&& f) &&
-        -> result<T, mapped_t<E, F>>
+        -> result<T, detail::mapped_t<E, F>>
     {
         if (this->is_ok()) {
             return std::move(*this).forward_ok(std::forward<F>(f));

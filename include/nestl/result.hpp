@@ -266,6 +266,9 @@ public:
 
 template <typename T, typename E>
 class result final : public detail::choose_ok<T, E> {
+    static_assert(!std::is_reference_v<T>, "use reference_wrapper");
+    static_assert(!std::is_reference_v<E>, "use reference_wrapper");
+
 public:
     template <typename... Args>
     result(Args&&... args) noexcept

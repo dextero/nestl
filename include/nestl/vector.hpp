@@ -15,11 +15,11 @@ class out_of_bounds {};
 template <typename I>
 class reverse_iterator {
 public:
-    using difference_type = std::iterator_traits<I>::difference_type;
-    using value_type = std::iterator_traits<I>::value_type;
-    using pointer = std::iterator_traits<I>::pointer;
-    using reference = std::iterator_traits<I>::reference;
-    using iterator_category = std::iterator_traits<I>::iterator_category;
+    using difference_type = typename std::iterator_traits<I>::difference_type;
+    using value_type = typename std::iterator_traits<I>::value_type;
+    using pointer = typename std::iterator_traits<I>::pointer;
+    using reference = typename std::iterator_traits<I>::reference;
+    using iterator_category = typename std::iterator_traits<I>::iterator_category;
 
 private:
     I m_it;
@@ -88,8 +88,8 @@ public:
     using const_pointer = const value_type*;
     using iterator = pointer;
     using const_iterator = const_pointer;
-    using reverse_iterator = reverse_iterator<iterator>;
-    using const_reverse_iterator = reverse_iterator<const_iterator>;
+    using reverse_iterator = nestl::reverse_iterator<iterator>;
+    using const_reverse_iterator = nestl::reverse_iterator<const_iterator>;
 
 private:
     Allocator m_allocator;
@@ -117,15 +117,17 @@ private:
     template <typename... Args>
     void emplace_back_unchecked(Args&&... args) {
         assert(size() < capacity());
-        new (m_data + size) T(std::forward<Args>(args)...);
+        new (m_data + size()) T(std::forward<Args>(args)...);
         ++m_size;
     }
 
-    [[nodiscard]] enum class compare_result {
+    enum class compare_result {
         less,
         equal,
         greater
-    } compare(const vector& other) const {
+    };
+
+   [[nodiscard]] compare_result compare(const vector& other) const {
         auto mismatch = std::mismatch(begin(), end(), other.begin());
         if (mismatch.first == end() && mismatch.second == other.end()) {
             return compare_result::equal;
@@ -154,9 +156,9 @@ public:
 
     // use copy() instead
     vector(const vector&) = delete;
-    vector& operator=(const vector&) = delete
+    vector& operator=(const vector&) = delete;
 
-        [[nodiscard]] result<vector<T>, out_of_memory> copy() noexcept {
+        [[nodiscard]] result<vector, out_of_memory> copy() noexcept {
         vector copy;
         if (auto res = copy.reserve(m_size)) {
             for (const T& e : *this) {
@@ -224,10 +226,10 @@ public:
     }
 
     [[nodiscard]] T& front() noexcept { return m_data[0]; }
-    [[nodiscard]] const T& front() noexcept const { return m_data[0]; }
+    [[nodiscard]] const T& front() const noexcept { return m_data[0]; }
 
     [[nodiscard]] T& back() noexcept { return m_data[m_size - 1]; }
-    [[nodiscard]] const T& back() noexcept const { return m_data[m_size - 1]; }
+    [[nodiscard]] const T& back() const noexcept { return m_data[m_size - 1]; }
 
     [[nodiscard]] T* data() noexcept { return m_data; }
     [[nodiscard]] const T* data() const noexcept { return m_data; }
@@ -244,20 +246,20 @@ public:
     [[nodiscard]] const_iterator cend() const noexcept { return end(); }
 
     [[nodiscard]] reverse_iterator rbegin() noexcept {
-        return reverse_iterator<iterator>{end() - 1};
+        return reverse_iterator{end() - 1};
     }
     [[nodiscard]] const_reverse_iterator rbegin() const noexcept {
-        return reverse_iterator<const_iterator>{end() - 1};
+        return const_reverse_iterator{end() - 1};
     }
     [[nodiscard]] const_reverse_iterator crbegin() const noexcept {
         return rbegin();
     }
 
     [[nodiscard]] reverse_iterator rend() noexcept {
-        return reverse_iterator<iterator>{begin() - 1};
+        return reverse_iterator{begin() - 1};
     }
     [[nodiscard]] const_reverse_iterator rend() const noexcept {
-        return reverse_iterator<const_iterator>{begin() - 1};
+        return const_reverse_iterator{begin() - 1};
     }
     [[nodiscard]] const_reverse_iterator crend() const noexcept {
         return rend();
@@ -310,14 +312,14 @@ public:
         pos = begin() + idx;
         std::copy_backward(pos, end(), end() + count);
         for (size_t i = 0; i < count; ++i) {
-            new (pos + i) T(std::forward<Args>(args)...);
+            new (pos + i) T(e);
         }
 
         return {pos};
     }
 
     template <typename It>
-    result<iterator out_of_memory> insert(const_iterator pos, It first,
+    result<iterator, out_of_memory> insert(const_iterator pos, It first,
                                           It last) noexcept {
         assert(begin() <= pos && pos <= end());
 
@@ -336,13 +338,13 @@ public:
         return {pos};
     }
 
-    result<iterator out_of_memory> insert(
+    result<iterator, out_of_memory> insert(
         const_iterator pos, std::initializer_list<T> ilist) noexcept {
         return insert(pos, ilist.begin(), ilist.end());
     }
 
     template <typename... Args>
-    result<iterator out_of_memory> emplace(iterator pos,
+    result<iterator, out_of_memory> emplace(iterator pos,
                                            Args&&... args) noexcept {
         assert(begin() <= pos && pos <= end());
 
@@ -364,7 +366,8 @@ public:
     }
 
     iterator erase(iterator first, iterator last) noexcept {
-        assert(begin() <= pos && pos <= end());
+        assert(begin() <= first && first <= end());
+        assert(begin() <= last && last <= end());
 
         size_t count = last - first;
         for (iterator p = first; p != last; ++p) {

@@ -1,7 +1,5 @@
 #include <nestl/result.hpp>
 
-#include <memory>
-
 #include <doctest.h>
 
 #include "test_utils.hpp"

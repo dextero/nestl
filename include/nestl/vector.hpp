@@ -75,7 +75,7 @@ public:
     I operator->() const noexcept { return m_it; }
 };
 
-template <typename T, typename Allocator>
+template <typename T, typename Allocator = system_allocator>
 class vector {
 public:
     using value_type = T;

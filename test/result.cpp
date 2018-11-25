@@ -143,9 +143,9 @@ TEST_CASE("result") {
         REQUIRE(e1.is_err());
         REQUIRE(e1.err() == 1);
 
-        result<void, int> o2 =
+        result<void, int> e2 =
             result<void, void>::err()
                 .map_err([]() { return 1; });
-        REQUIRE(o1.is_ok());
+        REQUIRE(e2.is_ok());
     }
 }

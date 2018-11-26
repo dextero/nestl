@@ -1,5 +1,7 @@
 #include <nestl/vector.hpp>
 
+#include <iostream>
+
 #include <doctest.h>
 
 #include "test_utils.hpp"
@@ -12,6 +14,22 @@ struct V : public nestl::vector<T> {
         this->assign(std::forward<std::initializer_list<T>>(ilist));
     }
 };
+
+}
+
+namespace nestl {
+
+template <typename T>
+std::ostream& operator <<(std::ostream& os, const nestl::vector<T>& v) {
+    if (v.empty()) {
+        return os << "{}";
+    }
+    os << "{ ";
+    for (auto it = v.begin(); it != v.end() - 1; ++it) {
+        os << *it << ", ";
+    }
+    return os << v.back() << " }";
+}
 
 } // namespace
 
@@ -113,42 +131,40 @@ TEST_CASE("vector") {
         SUBCASE("element at begin") {
             vector<int> v;
             v.assign({ 1, 2 });
-            REQUIRE(v.erase(v.begin()) == v.begin());
+            auto it = v.erase(v.begin());
+            REQUIRE(it == v.begin());
             REQUIRE(v == V{ 2 });
         }
 
         SUBCASE("element in the middle") {
             vector<int> v;
             v.assign({ 1, 2, 3 });
-            REQUIRE(v.erase(v.begin() + 1) == v.begin() + 1);
+            auto it = v.erase(v.begin() + 1);
+            REQUIRE(it == v.begin() + 1);
             REQUIRE(v == V{ 1, 3 });
-        }
-
-        SUBCASE("element at end") {
-            vector<int> v;
-            v.assign({ 1 });
-            REQUIRE(v.erase(v.end()) == v.end());
-            REQUIRE(v == V{ 1 });
         }
 
         SUBCASE("range at begin") {
             vector<int> v;
             v.assign({ 1, 2, 3 });
-            REQUIRE(v.erase(v.begin(), v.begin() + 2) == v.begin());
+            auto it = v.erase(v.begin(), v.begin() + 2);
+            REQUIRE(it == v.begin());
             REQUIRE(v == V{ 3 });
         }
 
         SUBCASE("range in the middle") {
             vector<int> v;
             v.assign({ 1, 2, 3, 4 });
-            REQUIRE(v.erase(v.begin() + 1, v.begin() + 3) == v.begin() + 1);
+            auto it = v.erase(v.begin() + 1, v.begin() + 3);
+            REQUIRE(it == v.begin() + 1);
             REQUIRE(v == V{ 1, 4 });
         }
 
         SUBCASE("range at end") {
             vector<int> v;
             v.assign({ 1 });
-            REQUIRE(v.erase(v.end(), v.end()) == v.end());
+            auto it = v.erase(v.end(), v.end());
+            REQUIRE(it == v.end());
             REQUIRE(v == V{ 1 });
         }
     }
@@ -157,21 +173,24 @@ TEST_CASE("vector") {
         SUBCASE("at begin") {
             vector<int> v;
             v.assign({ 2 });
-            REQUIRE(v.emplace(v.begin(), 1).ok() == v.begin());
+            auto it = v.emplace(v.begin(), 1).ok();
+            REQUIRE(it == v.begin());
             REQUIRE(v == V{ 1, 2 });
         }
 
         SUBCASE("in the middle") {
             vector<int> v;
             v.assign({ 1, 3 });
-            REQUIRE(v.emplace(v.begin() + 1, 2).ok() == v.begin() + 1);
+            auto it = v.emplace(v.begin() + 1, 2).ok();
+            REQUIRE(it == v.begin() + 1);
             REQUIRE(v == V{ 1, 2, 3 });
         }
 
         SUBCASE("at end") {
             vector<int> v;
             v.assign({ 1 });
-            REQUIRE(v.emplace(v.end(), 1).ok() == v.begin() + 1);
+            auto it = v.emplace(v.end(), 2).ok();
+            REQUIRE(it == v.begin() + 1);
             REQUIRE(v == V{ 1, 2 });
         }
     }
@@ -180,42 +199,48 @@ TEST_CASE("vector") {
         SUBCASE("value at begin") {
             vector<int> v;
             v.assign({ 2 });
-            REQUIRE(v.insert(v.begin(), 1).ok() == v.begin());
+            auto it = v.insert(v.begin(), 1).ok();
+            REQUIRE(it == v.begin());
             REQUIRE(v == V{ 1, 2 });
         }
 
         SUBCASE("value in the middle") {
             vector<int> v;
             v.assign({ 1, 3 });
-            REQUIRE(v.insert(v.begin() + 1, 2).ok() == v.begin() + 1);
+            auto it = v.insert(v.begin() + 1, 2).ok();
+            REQUIRE(it == v.begin() + 1);
             REQUIRE(v == V{ 1, 2, 3 });
         }
 
         SUBCASE("value at end") {
             vector<int> v;
             v.assign({ 1 });
-            REQUIRE(v.insert(v.end(), 2).ok() == v.begin() + 1);
+            auto it = v.insert(v.end(), 2).ok();
+            REQUIRE(it == v.begin() + 1);
             REQUIRE(v == V{ 1, 2 });
         }
 
         SUBCASE("range at begin") {
             vector<int> v;
             v.assign({ 3 });
-            REQUIRE(v.insert(v.begin(), { 1, 2 }).ok() == v.begin());
+            auto it = v.insert(v.begin(), { 1, 2 }).ok();
+            REQUIRE(it == v.begin());
             REQUIRE(v == V{ 1, 2, 3 });
         }
 
         SUBCASE("range in the middle") {
             vector<int> v;
             v.assign({ 1, 4 });
-            REQUIRE(v.insert(v.begin() + 1, { 2, 3 }).ok() == v.begin() + 1);
+            auto it = v.insert(v.begin() + 1, { 2, 3 }).ok();
+            REQUIRE(it == v.begin() + 1);
             REQUIRE(v == V{ 1, 2, 3, 4 });
         }
 
         SUBCASE("range at end") {
             vector<int> v;
             v.assign({ 1 });
-            REQUIRE(v.insert(v.end(), { 2, 3 }).ok() == v.begin() + 1);
+            auto it = v.insert(v.end(), { 2, 3 }).ok();
+            REQUIRE(it == v.begin() + 1);
             REQUIRE(v == V{ 1, 2, 3 });
         }
     }

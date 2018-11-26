@@ -168,6 +168,11 @@ private:
         }
     }
 
+    ~vector() noexcept {
+        clear();
+        m_allocator.free(m_data);
+    }
+
     result<void, out_of_memory> assign(size_t count, const T& value) noexcept {
         if (auto res = reserve(count); !res) {
             return {res.err()};
@@ -193,11 +198,6 @@ private:
     }
 
     allocator_type get_allocator() const noexcept { return m_allocator; }
-
-    ~vector() noexcept {
-        clear();
-        m_allocator.free(m_data);
-    }
 
     [[nodiscard]] result<std::reference_wrapper<T>, out_of_bounds> at(
         size_t idx) noexcept {
@@ -283,7 +283,7 @@ private:
         m_allocator.reallocate(m_data, m_size * sizeof(T));
     }
 
-    void clear() { erase(begin()); }
+    void clear() { erase(begin(), end()); }
 
     result<iterator, out_of_memory> insert(const_iterator pos,
                                            const T& e) noexcept {
@@ -326,8 +326,8 @@ private:
 
         pos = begin() + idx;
         std::copy_backward(const_cast<iterator>(pos), end(), end() + count);
-        for (const_iterator at = pos; first != last; ++first, ++pos) {
-            new (const_cast<iterator>(pos)) T(*first);
+        for (const_iterator at = pos; first != last; ++first, ++at) {
+            new (const_cast<iterator>(at)) T(*first);
         }
 
         m_size += count;
@@ -352,11 +352,12 @@ private:
         pos = begin() + idx;
         std::copy_backward(const_cast<iterator>(pos), end(), end() + 1);
         new (const_cast<iterator>(pos)) T(std::forward<Args>(args)...);
+        ++m_size;
         return {const_cast<iterator>(pos)};
     }
 
     iterator erase(const_iterator pos) noexcept {
-        return erase(const_cast<iterator>(pos));
+        return erase(pos, pos + 1);
     }
 
     iterator erase(const_iterator first, const_iterator last) noexcept {
@@ -368,7 +369,7 @@ private:
             p->~T();
         }
 
-        std::copy_backward(const_cast<iterator>(last), end(), const_cast<iterator>(first));
+        std::copy(const_cast<iterator>(last), end(), const_cast<iterator>(first));
         m_size -= count;
         return const_cast<iterator>(first);
     }

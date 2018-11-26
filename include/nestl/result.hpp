@@ -33,9 +33,8 @@ protected:
 
     using ok_v = wrapper<ok_t, T>;
     using err_v = wrapper<err_t, E>;
-    struct empty_t {};
 
-    using variant = nestl::detail::unchecked_variant<ok_v, err_v, empty_t>;
+    using variant = nestl::detail::unchecked_variant<ok_v, err_v>;
 
     variant m_value;
 

@@ -146,6 +146,14 @@ TEST_CASE("result") {
         REQUIRE(o2.is_err());
     }
 
+    SUBCASE("can map into void") {
+        result<void, int> ok = result<int, int>::ok(1).map([](int&&){});
+        REQUIRE(ok.is_ok());
+
+        result<int, void> err = result<int, int>::err(1).map_err([](int&&){});
+        REQUIRE(err.is_err());
+    }
+
     SUBCASE("does not introduce unnecessary memory overhead") {
         REQUIRE(sizeof(result<void, void>) == sizeof(bool));
         REQUIRE(sizeof(result<int, int>) <= sizeof(int) + alignof(int));

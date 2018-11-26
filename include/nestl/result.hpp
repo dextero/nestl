@@ -114,12 +114,21 @@ protected:
     with_nonvoid_ok(Args&&... args) noexcept
         : Base(std::forward<Args>(args)...) {}
 
-    template <typename F>
-        [[nodiscard]] auto map_ok_impl(F&& f) &&
+    template <typename F, typename = std::enable_if_t<!std::is_void_v<mapped_t<T, F>>>>
+        [[nodiscard]] auto map_ok_impl(F&& f, int) &&
         noexcept -> result<mapped_t<T, F>, E> {
         using R = result<mapped_t<T, F>, E>;
 
         return R::ok(f(std::move(*this).ok()));
+    }
+
+    template <typename F, typename = std::enable_if_t<std::is_void_v<mapped_t<T, F>>>>
+        [[nodiscard]] auto map_ok_impl(F&& f, ...) &&
+        noexcept -> result<mapped_t<T, F>, E> {
+        using R = result<mapped_t<T, F>, E>;
+
+        f(std::move(*this).ok());
+        return R::ok();
     }
 
     template <typename F>
@@ -162,7 +171,7 @@ protected:
     with_void_ok(Args&&... args) noexcept : Base(std::forward<Args>(args)...) {}
 
     template <typename F>
-        [[nodiscard]] auto map_ok_impl(F&& f) &&
+        [[nodiscard]] auto map_ok_impl(F&& f, ...) &&
         noexcept -> result<mapped_t<T, F>, E> {
         using R = result<mapped_t<T, F>, E>;
 
@@ -196,12 +205,21 @@ protected:
     with_nonvoid_err(Args&&... args) noexcept
         : Base(std::forward<Args>(args)...) {}
 
-    template <typename F>
-        [[nodiscard]] auto map_err_impl(F&& f) &&
+    template <typename F, typename = std::enable_if_t<!std::is_void_v<mapped_t<E, F>>>>
+        [[nodiscard]] auto map_err_impl(F&& f, int) &&
         noexcept -> result<T, mapped_t<E, F>> {
         using R = result<T, mapped_t<E, F>>;
 
         return R::err(f(std::move(*this).err()));
+    }
+
+    template <typename F, typename = std::enable_if_t<std::is_void_v<mapped_t<E, F>>>>
+        [[nodiscard]] auto map_err_impl(F&& f, ...) &&
+        noexcept -> result<T, mapped_t<E, F>> {
+        using R = result<T, mapped_t<E, F>>;
+
+        f(std::move(*this).err());
+        return R::err();
     }
 
     template <typename F>
@@ -245,7 +263,7 @@ protected:
         : Base(std::forward<Args>(args)...) {}
 
     template <typename F>
-        auto map_err_impl(F&& f) && noexcept -> result<T, mapped_t<E, F>> {
+        auto map_err_impl(F&& f, ...) && noexcept -> result<T, mapped_t<E, F>> {
         using R = result<T, mapped_t<E, F>>;
 
         return R::err(f());
@@ -281,9 +299,9 @@ public:
     result& operator=(const result&) = delete;
 
     template <typename F>
-        auto map(F&& f) && noexcept -> result<detail::mapped_t<T, F>, E> {
+    auto map(F&& f) && noexcept -> result<detail::mapped_t<T, F>, E> {
         if (this->is_ok()) {
-            return std::move(*this).map_ok_impl(std::forward<F>(f));
+            return std::move(*this).map_ok_impl(std::forward<F>(f), 0);
         } else {
             assert(this->is_err());
             return std::move(*this).forward_err(std::forward<F>(f));
@@ -296,7 +314,7 @@ public:
             return std::move(*this).forward_ok(std::forward<F>(f));
         } else {
             assert(this->is_err());
-            return std::move(*this).map_err_impl(std::forward<F>(f));
+            return std::move(*this).map_err_impl(std::forward<F>(f), 0);
         }
     }
 };

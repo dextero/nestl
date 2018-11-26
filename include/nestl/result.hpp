@@ -114,7 +114,8 @@ protected:
     with_nonvoid_ok(Args&&... args) noexcept
         : Base(std::forward<Args>(args)...) {}
 
-    template <typename F, typename = std::enable_if_t<!std::is_void_v<mapped_t<T, F>>>>
+    template <typename F,
+              typename = std::enable_if_t<!std::is_void_v<mapped_t<T, F>>>>
         [[nodiscard]] auto map_ok_impl(F&& f, int) &&
         noexcept -> result<mapped_t<T, F>, E> {
         using R = result<mapped_t<T, F>, E>;
@@ -122,7 +123,8 @@ protected:
         return R::ok(f(std::move(*this).ok()));
     }
 
-    template <typename F, typename = std::enable_if_t<std::is_void_v<mapped_t<T, F>>>>
+    template <typename F,
+              typename = std::enable_if_t<std::is_void_v<mapped_t<T, F>>>>
         [[nodiscard]] auto map_ok_impl(F&& f, ...) &&
         noexcept -> result<mapped_t<T, F>, E> {
         using R = result<mapped_t<T, F>, E>;
@@ -205,7 +207,8 @@ protected:
     with_nonvoid_err(Args&&... args) noexcept
         : Base(std::forward<Args>(args)...) {}
 
-    template <typename F, typename = std::enable_if_t<!std::is_void_v<mapped_t<E, F>>>>
+    template <typename F,
+              typename = std::enable_if_t<!std::is_void_v<mapped_t<E, F>>>>
         [[nodiscard]] auto map_err_impl(F&& f, int) &&
         noexcept -> result<T, mapped_t<E, F>> {
         using R = result<T, mapped_t<E, F>>;
@@ -213,7 +216,8 @@ protected:
         return R::err(f(std::move(*this).err()));
     }
 
-    template <typename F, typename = std::enable_if_t<std::is_void_v<mapped_t<E, F>>>>
+    template <typename F,
+              typename = std::enable_if_t<std::is_void_v<mapped_t<E, F>>>>
         [[nodiscard]] auto map_err_impl(F&& f, ...) &&
         noexcept -> result<T, mapped_t<E, F>> {
         using R = result<T, mapped_t<E, F>>;
@@ -299,7 +303,7 @@ public:
     result& operator=(const result&) = delete;
 
     template <typename F>
-    auto map(F&& f) && noexcept -> result<detail::mapped_t<T, F>, E> {
+        auto map(F&& f) && noexcept -> result<detail::mapped_t<T, F>, E> {
         if (this->is_ok()) {
             return std::move(*this).map_ok_impl(std::forward<F>(f), 0);
         } else {

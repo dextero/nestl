@@ -24,13 +24,13 @@ public:
     }
 
     template <typename T>
-    T& as() & noexcept {
+        T& as() & noexcept {
         static_assert(is_one_of<T, Args...>);
         return *reinterpret_cast<T*>(data);
     }
 
     template <typename T>
-    T&& as() && noexcept {
+        T&& as() && noexcept {
         static_assert(is_one_of<T, Args...>);
         return std::move(*reinterpret_cast<T*>(data));
     }

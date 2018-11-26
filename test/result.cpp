@@ -8,15 +8,15 @@ TEST_CASE("result") {
     using nestl::result;
 
     SUBCASE("is constructible from T if T != E") {
-        auto r = result<int, const char *>{1};
+        auto r = result<int, const char*>{1};
         REQUIRE(r.is_ok());
         REQUIRE(r.ok() == 1);
         REQUIRE(!r.is_err());
     }
 
     SUBCASE("is constructible from E if T != W") {
-        const char *foo = "foo";
-        auto r = result<int, const char *>{foo};
+        const char* foo = "foo";
+        auto r = result<int, const char*>{foo};
         REQUIRE(!r.is_ok());
         REQUIRE(r.is_err());
         REQUIRE(r.err() == foo);
@@ -87,13 +87,13 @@ TEST_CASE("result") {
 
     SUBCASE("can map Ok") {
         result<int, Mock> a = result<Movable, Mock>::emplace_ok().map(
-            [](Movable &&) { return 0; });
+            [](Movable&&) { return 0; });
     }
 
     SUBCASE("map is a noop in Err state") {
         result<Mock, Mock> a =
             result<Mock, Mock>::emplace_err(Mock::make().expect_moves(3))
-                .map([](Mock &&) {
+                .map([](Mock&&) {
                     FAIL("should not be called");
                     return Mock::make();
                 });
@@ -101,13 +101,13 @@ TEST_CASE("result") {
 
     SUBCASE("can map_err Err") {
         result<Mock, int> a = result<Mock, Movable>::emplace_err().map_err(
-            [](Movable &&) { return 0; });
+            [](Movable&&) { return 0; });
     }
 
     SUBCASE("map_err is a noop in Ok state") {
         result<Mock, Mock> a =
             result<Mock, Mock>::emplace_ok(Mock::make().expect_moves(3))
-                .map_err([](Mock &&) {
+                .map_err([](Mock&&) {
                     FAIL("should not be called");
                     return Mock::make();
                 });
@@ -147,10 +147,10 @@ TEST_CASE("result") {
     }
 
     SUBCASE("can map into void") {
-        result<void, int> ok = result<int, int>::ok(1).map([](int&&){});
+        result<void, int> ok = result<int, int>::ok(1).map([](int&&) {});
         REQUIRE(ok.is_ok());
 
-        result<int, void> err = result<int, int>::err(1).map_err([](int&&){});
+        result<int, void> err = result<int, int>::err(1).map_err([](int&&) {});
         REQUIRE(err.is_err());
     }
 

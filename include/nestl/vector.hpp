@@ -179,7 +179,7 @@ private:
         }
 
         clear();
-        return insert(end(), count, value).map([](iterator&&){});
+        return insert(end(), count, value).map([](iterator&&) {});
     }
 
     template <typename It>
@@ -189,7 +189,7 @@ private:
         }
 
         clear();
-        return insert(end(), first, last).map([](iterator&&){});
+        return insert(end(), first, last).map([](iterator&&) {});
     }
 
     result<void, out_of_memory> assign(
@@ -356,9 +356,7 @@ private:
         return {const_cast<iterator>(pos)};
     }
 
-    iterator erase(const_iterator pos) noexcept {
-        return erase(pos, pos + 1);
-    }
+    iterator erase(const_iterator pos) noexcept { return erase(pos, pos + 1); }
 
     iterator erase(const_iterator first, const_iterator last) noexcept {
         assert(begin() <= first && first <= end());
@@ -369,7 +367,8 @@ private:
             p->~T();
         }
 
-        std::copy(const_cast<iterator>(last), end(), const_cast<iterator>(first));
+        std::copy(const_cast<iterator>(last), end(),
+                  const_cast<iterator>(first));
         m_size -= count;
         return const_cast<iterator>(first);
     }

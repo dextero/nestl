@@ -3,9 +3,9 @@
 #include <cstddef>
 #include <type_traits>
 
+#include <nestl/detail/variant_base.hpp>
 #include <nestl/result.hpp>
 #include <nestl/utility.hpp>
-#include <nestl/detail/variant_base.hpp>
 
 namespace nestl {
 struct variant_type_error {};

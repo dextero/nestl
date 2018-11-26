@@ -174,7 +174,7 @@ private:
         }
 
         clear();
-        return insert(end(), count, value);
+        return insert(end(), count, value).map([](iterator&&){});
     }
 
     template <typename It>
@@ -184,7 +184,7 @@ private:
         }
 
         clear();
-        return insert(end(), first, last);
+        return insert(end(), first, last).map([](iterator&&){});
     }
 
     result<void, out_of_memory> assign(
@@ -285,10 +285,6 @@ private:
 
     void clear() { erase(begin()); }
 
-    result<iterator, out_of_memory> insert(iterator pos, const T& e) noexcept {
-        return emplace(pos, e);
-    }
-
     result<iterator, out_of_memory> insert(const_iterator pos,
                                            const T& e) noexcept {
         return emplace(pos, e);
@@ -308,12 +304,13 @@ private:
         }
 
         pos = begin() + idx;
-        std::copy_backward(pos, end(), end() + count);
+        std::copy_backward(const_cast<iterator>(pos), end(), end() + count);
         for (size_t i = 0; i < count; ++i) {
-            new (pos + i) T(e);
+            new (const_cast<iterator>(pos + i)) T(e);
         }
 
-        return {pos};
+        m_size += count;
+        return {const_cast<iterator>(pos)};
     }
 
     template <typename It>
@@ -328,12 +325,13 @@ private:
         }
 
         pos = begin() + idx;
-        std::copy_backward(pos, end(), end() + count);
-        for (iterator at = pos; first != last; ++first, ++pos) {
-            new (pos) T(*first);
+        std::copy_backward(const_cast<iterator>(pos), end(), end() + count);
+        for (const_iterator at = pos; first != last; ++first, ++pos) {
+            new (const_cast<iterator>(pos)) T(*first);
         }
 
-        return {pos};
+        m_size += count;
+        return {const_cast<iterator>(pos)};
     }
 
     result<iterator, out_of_memory> insert(
@@ -342,7 +340,7 @@ private:
     }
 
     template <typename... Args>
-    result<iterator, out_of_memory> emplace(iterator pos,
+    result<iterator, out_of_memory> emplace(const_iterator pos,
                                             Args&&... args) noexcept {
         assert(begin() <= pos && pos <= end());
 
@@ -352,32 +350,27 @@ private:
         }
 
         pos = begin() + idx;
-        std::copy_backward(pos, end(), end() + 1);
-        new (pos) T(std::forward<Args>(args)...);
-        return {pos};
+        std::copy_backward(const_cast<iterator>(pos), end(), end() + 1);
+        new (const_cast<iterator>(pos)) T(std::forward<Args>(args)...);
+        return {const_cast<iterator>(pos)};
     }
-
-    iterator erase(iterator pos) noexcept { return erase(pos, end()); }
 
     iterator erase(const_iterator pos) noexcept {
         return erase(const_cast<iterator>(pos));
     }
 
-    iterator erase(iterator first, iterator last) noexcept {
+    iterator erase(const_iterator first, const_iterator last) noexcept {
         assert(begin() <= first && first <= end());
         assert(begin() <= last && last <= end());
 
         size_t count = last - first;
-        for (iterator p = first; p != last; ++p) {
+        for (const_iterator p = first; p != last; ++p) {
             p->~T();
         }
 
-        std::copy_backward(last, end(), first);
-        return first;
-    }
-
-    iterator erase(const_iterator first, const_iterator last) noexcept {
-        return erase(const_cast<iterator>(first), const_cast<iterator>(last));
+        std::copy_backward(const_cast<iterator>(last), end(), const_cast<iterator>(first));
+        m_size -= count;
+        return const_cast<iterator>(first);
     }
 
     result<std::reference_wrapper<T>, out_of_memory> push_back(T&& e) noexcept {
@@ -456,4 +449,5 @@ private:
         return compare(other) != compare_result::less;
     }
 };
+
 }  // namespace nestl

@@ -5,7 +5,7 @@
 
 #include <nestl/result.hpp>
 #include <nestl/utility.hpp>
-#include <nestl/variant_base.hpp>
+#include <nestl/detail/variant_base.hpp>
 
 namespace nestl {
 struct variant_type_error {};

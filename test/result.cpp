@@ -32,7 +32,7 @@ TEST_CASE("result") {
     SUBCASE("is movable in Ok state") {
         auto a = result<Movable, Mock>::ok({});
         auto b = std::move(a);
-        REQUIRE(!a.is_ok());
+        REQUIRE(a.is_ok());
         REQUIRE(!a.is_err());
         REQUIRE(b.is_ok());
         REQUIRE(!b.is_err());
@@ -42,7 +42,7 @@ TEST_CASE("result") {
         auto a = result<Mock, Movable>::err({});
         auto b = std::move(a);
         REQUIRE(!a.is_ok());
-        REQUIRE(!a.is_err());
+        REQUIRE(a.is_err());
         REQUIRE(!b.is_ok());
         REQUIRE(b.is_err());
     }
@@ -147,7 +147,7 @@ TEST_CASE("result") {
     }
 
     SUBCASE("does not introduce unnecessary memory overhead") {
-        REQUIRE(sizeof(result<void, void>) <= 2);
+        REQUIRE(sizeof(result<void, void>) == sizeof(bool));
         REQUIRE(sizeof(result<int, int>) <= sizeof(int) + alignof(int));
         REQUIRE(sizeof(result<double, int>) <=
                 sizeof(double) + alignof(double));

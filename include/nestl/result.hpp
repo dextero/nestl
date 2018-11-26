@@ -5,7 +5,7 @@
 #include <type_traits>
 #include <utility>
 
-#include <nestl/detail/variant_base.hpp>
+#include <nestl/detail/storage.hpp>
 
 namespace nestl {
 
@@ -18,33 +18,30 @@ class result;
 namespace detail {
 
 template <typename T, typename E>
-class result_base {
+using result_storage = std::conditional_t<
+    std::is_void_v<T>,
+    std::conditional_t<std::is_void_v<E>, storage<>, storage<E>>,
+    std::conditional_t<std::is_void_v<E>, storage<T>, storage<T, E>>>;
+
+template <typename T, typename E>
+class result_base : protected result_storage<T, E> {
 protected:
-    template <typename Tag, typename V>
-    struct wrapper {
-        V value;
+    class void_t {};
 
-        template <typename... Args>
-        wrapper(Args&&... args) : value(std::forward<Args>(args)...) {}
-    };
+    bool m_is_ok;
 
-    template <typename Tag>
-    struct wrapper<Tag, void> {};
-
-    using ok_v = wrapper<ok_t, T>;
-    using err_v = wrapper<err_t, E>;
-
-    using variant = nestl::detail::unchecked_variant<ok_v, err_v>;
-
-    variant m_value;
+    result_base(ok_t, void_t) : m_is_ok(true) {}
+    result_base(err_t, void_t) : m_is_ok(false) {}
 
     template <typename... Args>
     result_base(ok_t, Args&&... args) noexcept
-        : m_value(tag<ok_v>{}, std::forward<Args>(args)...) {}
+        : m_is_ok(true),
+          result_storage<T, E>(tag<T>{}, std::forward<Args>(args)...) {}
 
     template <typename... Args>
     result_base(err_t, Args&&... args) noexcept
-        : m_value(tag<err_v>{}, std::forward<Args>(args)...) {}
+        : m_is_ok(false),
+          result_storage<T, E>(tag<E>{}, std::forward<Args>(args)...) {}
 
 public:
     result_base(result_base&& r) noexcept = default;
@@ -53,15 +50,17 @@ public:
     result_base(const result_base& r) = delete;
     result_base& operator=(const result_base& r) = delete;
 
-    ~result_base() noexcept { m_value.~variant(); }
-
-    [[nodiscard]] bool is_ok() const noexcept {
-        return m_value.template is<ok_v>();
+    ~result_base() noexcept {
+        if (is_ok()) {
+            this->template destroy<T>();
+        } else {
+            this->template destroy<E>();
+        }
     }
 
-    [[nodiscard]] bool is_err() const noexcept {
-        return m_value.template is<err_v>();
-    }
+    [[nodiscard]] bool is_ok() const noexcept { return m_is_ok; }
+
+    [[nodiscard]] bool is_err() const noexcept { return !is_ok(); }
 
     [[nodiscard]] operator bool() const noexcept { return is_ok(); }
 };
@@ -142,14 +141,13 @@ public:
     }
 
     [[nodiscard]] T ok() && noexcept {
-        return std::move(this->m_value)
-            .template get_unchecked<typename Base::ok_v>()
-            .value;
+        assert(this->is_ok());
+        return std::move(*this).template as<T>();
     }
 
     [[nodiscard]] const T& ok() const& noexcept {
-        return this->m_value.template get_unchecked<typename Base::ok_v>()
-            .value;
+        assert(this->is_ok());
+        return this->template as<T>();
     }
 };
 
@@ -158,6 +156,8 @@ class with_void_ok : public Base {
     static_assert(std::is_void_v<T>);
 
 protected:
+    with_void_ok(ok_t) noexcept : Base(ok_t{}, typename Self::void_t{}) {}
+
     template <typename... Args>
     with_void_ok(Args&&... args) noexcept : Base(std::forward<Args>(args)...) {}
 
@@ -223,14 +223,13 @@ public:
     }
 
     [[nodiscard]] E err() && noexcept {
-        return std::move(this->m_value)
-            .template get_unchecked<typename Base::err_v>()
-            .value;
+        assert(this->is_err());
+        return std::move(*this).template as<E>();
     }
 
     [[nodiscard]] const E& err() const& noexcept {
-        return this->m_value.template get_unchecked<typename Base::err_v>()
-            .value;
+        assert(this->is_err());
+        return this->template as<E>();
     }
 };
 
@@ -239,6 +238,8 @@ class with_void_err : public Base {
     static_assert(std::is_void_v<E>);
 
 protected:
+    with_void_err(err_t) noexcept : Base(err_t{}, typename Self::void_t{}) {}
+
     template <typename... Args>
     with_void_err(Args&&... args) noexcept
         : Base(std::forward<Args>(args)...) {}

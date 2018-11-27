@@ -4,12 +4,14 @@
 // Licensed under the MIT license. See LICENSE file in the project root for
 // details.
 //
-#include <nestl/variant.hpp>
-
-#include <cstring>
-#include <memory>
-
 #include <doctest.h>
+
+#include <functional>
+#include <type_traits>
+#include <utility>
+
+#include <nestl/result.hpp>
+#include <nestl/variant.hpp>
 
 #include "test_utils.hpp"
 

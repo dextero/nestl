@@ -1,7 +1,10 @@
 #pragma once
 
 #include <cstddef>
+
+#include <functional>
 #include <type_traits>
+#include <utility>
 
 #include <nestl/detail/variant_base.hpp>
 #include <nestl/result.hpp>

@@ -73,22 +73,22 @@ TEST_CASE("result") {
 
     SUBCASE("can be safely moved-from in Ok state") {
         auto a = result<Movable, Mock>::emplace_ok();
-        auto b = std::move(a).ok();
+        [[maybe_unused]] auto b = std::move(a).ok();
     }
 
     SUBCASE("can be safely moved-from in Err state") {
         auto a = result<Mock, Movable>::emplace_err();
-        auto b = std::move(a).err();
+        [[maybe_unused]] auto b = std::move(a).err();
     }
 
     SUBCASE("can be safely copied-from in Ok state") {
         auto a = result<Copyable, Mock>::emplace_ok();
-        auto b = a.ok();
+        [[maybe_unused]] auto b = a.ok();
     }
 
     SUBCASE("can be safely copied-from in Err state") {
         auto a = result<Mock, Copyable>::emplace_err();
-        auto b = a.err();
+        [[maybe_unused]] auto b = a.err();
     }
 
     SUBCASE("can map Ok") {

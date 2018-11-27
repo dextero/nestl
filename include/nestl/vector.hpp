@@ -1,9 +1,15 @@
 #pragma once
 
-#include <algorithm>
 #include <cassert>
+#include <cstddef>
+
+#include <algorithm>
+#include <functional>
 #include <initializer_list>
+#include <iterator>
 #include <limits>
+#include <new>
+#include <utility>
 
 #include <nestl/allocator.hpp>
 #include <nestl/result.hpp>

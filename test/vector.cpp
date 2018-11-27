@@ -4,13 +4,15 @@
 // Licensed under the MIT license. See LICENSE file in the project root for
 // details.
 //
-#include <nestl/vector.hpp>
-
-#include <iostream>
-
 #include <doctest.h>
 
-#include "test_utils.hpp"
+#include <functional>
+#include <initializer_list>
+#include <utility>
+#include <iostream>
+
+#include <nestl/result.hpp>
+#include <nestl/vector.hpp>
 
 namespace {
 

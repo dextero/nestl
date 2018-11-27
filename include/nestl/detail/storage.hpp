@@ -1,3 +1,9 @@
+//
+// Copyright (c) Marcin Radomski. All rights reserved.
+//
+// Licensed under the MIT license. See LICENSE file in the project root for
+// details.
+//
 #pragma once
 
 #include <nestl/utility.hpp>

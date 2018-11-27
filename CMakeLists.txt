@@ -1,3 +1,9 @@
+#
+# Copyright 2018 Marcin Radomski. All rights reserved.
+#
+# Licensed under the MIT license. See LICENSE file in the project root for
+# details.
+#
 cmake_minimum_required(VERSION 3.10)
 project(nestl VERSION 0.1 LANGUAGES CXX)
 

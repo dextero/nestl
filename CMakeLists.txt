@@ -20,6 +20,22 @@ target_sources(nestl_test PRIVATE
                test/variant.cpp
                test/vector.cpp)
 target_link_libraries(nestl_test PRIVATE nestl)
+target_compile_options(nestl_test PRIVATE
+                       $<$<CXX_COMPILER_ID:GNU>:-Wall -Wextra -Weverything>)
 
 enable_testing()
 add_test(NAME nestl COMMAND $<TARGET_FILE:nestl_test> DEPENDS nestl_test)
+
+option(NESTL_STATIC_ANALYSIS "Enable static analysis tools" ON)
+if(NESTL_STATIC_ANALYSIS)
+    find_program(CLANG_TIDY NAMES clang-tidy REQUIRED)
+    find_program(CPPCHECK NAMES cppcheck REQUIRED)
+    find_program(CPPLINT NAMES cpplint REQUIRED)
+    find_program(INCLUDE_WHAT_YOU_USE NAMES include-what-you-use iwyu REQUIRED)
+
+    set_target_properties(nestl_test PROPERTIES
+                          CXX_CLANG_TIDY "${CLANG_TIDY};--checks=*,-fuchsia-default-arguments"
+                          CXX_CPPCHECK "${CPPCHECK};--force;--quiet"
+                          CXX_CPPLINT "${CPPLINT}"
+                          CXX_INCLUDE_WHAT_YOU_USE "${INCLUDE_WHAT_YOU_USE}")
+endif()

@@ -8,8 +8,8 @@
 
 #include <functional>
 #include <initializer_list>
-#include <utility>
 #include <iostream>
+#include <utility>
 
 #include <nestl/result.hpp>
 #include <nestl/vector.hpp>
@@ -28,6 +28,7 @@ struct V : public nestl::vector<T> {
 namespace nestl {
 
 template <typename T>
+// NOLINTNEXTLINE (fuchsia-overloaded-operator)
 std::ostream& operator<<(std::ostream& os, const nestl::vector<T>& v) {
     if (v.empty()) {
         return os << "{}";
@@ -41,10 +42,11 @@ std::ostream& operator<<(std::ostream& os, const nestl::vector<T>& v) {
 
 }  // namespace nestl
 
-TEST_CASE("vector") {
+TEST_SUITE("vector") {
     using nestl::vector;
 
-    SUBCASE("assign") {
+    // NOLINTNEXTLINE (cert-err58-cpp)
+    TEST_CASE("assign") {
         SUBCASE("count + element, same size") {
             vector<int> v;
             REQUIRE(v.push_back(1).is_ok());
@@ -94,7 +96,8 @@ TEST_CASE("vector") {
         }
     }
 
-    SUBCASE("at") {
+    // NOLINTNEXTLINE (cert-err58-cpp)
+    TEST_CASE("at") {
         SUBCASE("in bounds") {
             vector<int> v;
             v.assign({1, 2, 3});
@@ -111,7 +114,8 @@ TEST_CASE("vector") {
         }
     }
 
-    SUBCASE("empty") {
+    // NOLINTNEXTLINE (cert-err58-cpp)
+    TEST_CASE("empty") {
         vector<int> v;
         v.assign({1});
         REQUIRE(!v.empty());
@@ -120,7 +124,8 @@ TEST_CASE("vector") {
         REQUIRE(v.empty());
     }
 
-    SUBCASE("clear") {
+    // NOLINTNEXTLINE (cert-err58-cpp)
+    TEST_CASE("clear") {
         SUBCASE("empty") {
             vector<int> v;
             v.clear();
@@ -135,7 +140,8 @@ TEST_CASE("vector") {
         }
     }
 
-    SUBCASE("erase") {
+    // NOLINTNEXTLINE (cert-err58-cpp)
+    TEST_CASE("erase") {
         SUBCASE("element at begin") {
             vector<int> v;
             v.assign({1, 2});
@@ -177,7 +183,8 @@ TEST_CASE("vector") {
         }
     }
 
-    SUBCASE("emplace") {
+    // NOLINTNEXTLINE (cert-err58-cpp)
+    TEST_CASE("emplace") {
         SUBCASE("at begin") {
             vector<int> v;
             v.assign({2});
@@ -203,7 +210,8 @@ TEST_CASE("vector") {
         }
     }
 
-    SUBCASE("insert") {
+    // NOLINTNEXTLINE (cert-err58-cpp)
+    TEST_CASE("insert") {
         SUBCASE("value at begin") {
             vector<int> v;
             v.assign({2});
@@ -253,19 +261,22 @@ TEST_CASE("vector") {
         }
     }
 
-    SUBCASE("push_back") {
+    // NOLINTNEXTLINE (cert-err58-cpp)
+    TEST_CASE("push_back") {
         vector<int> v;
         REQUIRE(v.push_back(1).is_ok());
         REQUIRE(v == V{1});
     }
 
-    SUBCASE("emplace_back") {
+    // NOLINTNEXTLINE (cert-err58-cpp)
+    TEST_CASE("emplace_back") {
         vector<int> v;
         REQUIRE(v.emplace_back(1).is_ok());
         REQUIRE(v == V{1});
     }
 
-    SUBCASE("pop_back") {
+    // NOLINTNEXTLINE (cert-err58-cpp)
+    TEST_CASE("pop_back") {
         vector<int> v;
         v.assign({1, 2});
         v.pop_back();
@@ -274,7 +285,8 @@ TEST_CASE("vector") {
         REQUIRE(v == V{});
     }
 
-    SUBCASE("resize") {
+    // NOLINTNEXTLINE (cert-err58-cpp)
+    TEST_CASE("resize") {
         SUBCASE("same size") {
             vector<int> v;
             v.assign({1, 2});
@@ -297,7 +309,8 @@ TEST_CASE("vector") {
         }
     }
 
-    SUBCASE("swap") {
+    // NOLINTNEXTLINE (cert-err58-cpp)
+    TEST_CASE("swap") {
         vector<int> v1;
         v1.assign({1, 2});
 

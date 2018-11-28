@@ -132,7 +132,7 @@ protected:
     template <typename F,
               typename = std::enable_if_t<std::is_void_v<mapped_t<T, F>>>>
         [[nodiscard]] auto map_ok_impl(F&& f, ...) &&
-        noexcept(noexcept(f(std::declval<T>())))-> result<mapped_t<T, F>, E> {
+        noexcept(noexcept(f(std::declval<T>()))) -> result<mapped_t<T, F>, E> {
         using R = result<mapped_t<T, F>, E>;
 
         f(std::move(*this).ok());
@@ -273,7 +273,8 @@ protected:
         : Base(std::forward<Args>(args)...) {}
 
     template <typename F>
-        auto map_err_impl(F&& f, ...) && noexcept(noexcept(f())) -> result<T, mapped_t<E, F>> {
+        auto map_err_impl(F&& f, ...) &&
+        noexcept(noexcept(f())) -> result<T, mapped_t<E, F>> {
         using R = result<T, mapped_t<E, F>>;
 
         return R::err(f());
@@ -309,9 +310,10 @@ public:
     result& operator=(const result&) = delete;
 
     template <typename F>
-        auto map(F&& f) && 
-    noexcept(noexcept(std::move(*this).map_ok_impl(std::declval<F>(), 0)) && noexcept(std::move(*this).forward_err(std::declval<F>())))
-        -> result<detail::mapped_t<T, F>, E> {
+        auto map(F&& f) &&
+        noexcept(noexcept(std::move(*this).map_ok_impl(std::declval<F>(), 0)) &&
+                 noexcept(std::move(*this).forward_err(std::declval<F>())))
+            -> result<detail::mapped_t<T, F>, E> {
         if (this->is_ok()) {
             return std::move(*this).map_ok_impl(std::forward<F>(f), 0);
         } else {
@@ -321,9 +323,10 @@ public:
     }
 
     template <typename F>
-    auto map_err(F&& f) &&
-    noexcept(noexcept(std::move(*this).forward_ok(std::declval<F>())) && noexcept(std::move(*this).map_err_impl(std::declval<F>(), 0)))
-    -> result<T, detail::mapped_t<E, F>> {
+        auto map_err(F&& f) &&
+        noexcept(noexcept(std::move(*this).forward_ok(std::declval<F>())) &&
+                 noexcept(std::move(*this).map_err_impl(std::declval<F>(), 0)))
+            -> result<T, detail::mapped_t<E, F>> {
         if (this->is_ok()) {
             return std::move(*this).forward_ok(std::forward<F>(f));
         } else {

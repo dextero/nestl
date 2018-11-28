@@ -8,6 +8,8 @@
 
 #include <doctest.h>
 
+#include <stdexcept>
+
 #include "test_utils.hpp"
 
 TEST_SUITE("result") {
@@ -184,5 +186,31 @@ TEST_SUITE("result") {
         REQUIRE(sizeof(result<int, int>) <= sizeof(int) + alignof(int));
         REQUIRE(sizeof(result<double, int>)
                 <= sizeof(double) + alignof(double));
+    }
+
+    // NOLINTNEXTLINE (cert-err58-cpp)
+    TEST_CASE("map keeps noexceptness") {
+        auto void_except = []() { throw std::runtime_error(""); };
+        auto void_no_except = []() noexcept {};
+        auto int_except = [](int a) { throw std::runtime_error(""); };
+        auto int_no_except = [](int a) noexcept {};
+
+        REQUIRE(!noexcept(result<void, void>::ok().map(void_except)));
+        REQUIRE(noexcept(result<void, void>::ok().map(void_no_except)));
+        REQUIRE(!noexcept(result<int, void>::ok(1).map(int_except)));
+        REQUIRE(noexcept(result<int, void>::ok(1).map(int_no_except)));
+    }
+
+    // NOLINTNEXTLINE (cert-err58-cpp)
+    TEST_CASE("map_err keeps noexceptness") {
+        auto void_except = []() { throw std::runtime_error(""); };
+        auto void_no_except = []() noexcept {};
+        auto int_except = [](int a) { throw std::runtime_error(""); };
+        auto int_no_except = [](int a) noexcept {};
+
+        REQUIRE(!noexcept(result<void, void>::err().map_err(void_except)));
+        REQUIRE(noexcept(result<void, void>::err().map_err(void_no_except)));
+        REQUIRE(!noexcept(result<void, int>::err(1).map_err(int_except)));
+        REQUIRE(noexcept(result<void, int>::err(1).map_err(int_no_except)));
     }
 }

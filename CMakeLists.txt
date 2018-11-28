@@ -41,7 +41,7 @@ if(NESTL_STATIC_ANALYSIS)
 
     set_target_properties(nestl_test PROPERTIES
                           CXX_CLANG_TIDY "${CLANG_TIDY};--checks=*,-fuchsia-default-arguments"
-                          CXX_CPPCHECK "${CPPCHECK};--force;--quiet"
+                          CXX_CPPCHECK "${CPPCHECK};--force;--quiet;--suppress=*:$ENV{HOME}/.conan/data/doctest/*"
                           CXX_CPPLINT "${CPPLINT}"
                           CXX_INCLUDE_WHAT_YOU_USE "${INCLUDE_WHAT_YOU_USE}")
 endif()

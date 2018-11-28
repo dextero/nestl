@@ -182,7 +182,7 @@ TEST_SUITE("result") {
     TEST_CASE("does not introduce unnecessary memory overhead") {
         REQUIRE(sizeof(result<void, void>) == sizeof(bool));
         REQUIRE(sizeof(result<int, int>) <= sizeof(int) + alignof(int));
-        REQUIRE(sizeof(result<double, int>) <=
-                sizeof(double) + alignof(double));
+        REQUIRE(sizeof(result<double, int>)
+                <= sizeof(double) + alignof(double));
     }
 }

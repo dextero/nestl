@@ -20,11 +20,11 @@ target_include_directories(nestl INTERFACE
                            $<INSTALL_INTERFACE:include>)
 target_compile_features(nestl INTERFACE cxx_std_17)
 
-add_executable(nestl_test test/main.cpp)
+add_executable(nestl_test tests/main.cpp)
 target_sources(nestl_test PRIVATE
-               test/result.cpp
-               test/variant.cpp
-               test/vector.cpp)
+               tests/result.cpp
+               tests/variant.cpp
+               tests/vector.cpp)
 target_link_libraries(nestl_test PRIVATE nestl)
 target_compile_options(nestl_test PRIVATE
                        $<$<CXX_COMPILER_ID:GNU>:-Wall -Wextra -Weverything>)

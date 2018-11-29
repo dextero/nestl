@@ -20,73 +20,11 @@
 #include <nestl/allocator.hpp>
 #include <nestl/result.hpp>
 
+#include <nestl/detail/reverse_iterator.hpp>
+
 namespace nestl {
 
 class out_of_bounds {};
-
-template <typename I>
-class reverse_iterator {
-public:
-    using difference_type = typename std::iterator_traits<I>::difference_type;
-    using value_type = typename std::iterator_traits<I>::value_type;
-    using pointer = typename std::iterator_traits<I>::pointer;
-    using reference = typename std::iterator_traits<I>::reference;
-    using iterator_category =
-        typename std::iterator_traits<I>::iterator_category;
-
-private:
-    I m_it;
-
-public:
-    reverse_iterator() = delete;
-
-    reverse_iterator(I it) : m_it(it) {}
-
-    reverse_iterator(reverse_iterator&&) = default;
-    reverse_iterator& operator=(reverse_iterator&&) = default;
-
-    reverse_iterator(const reverse_iterator&) = default;
-    reverse_iterator& operator=(const reverse_iterator&) = default;
-
-    reverse_iterator& operator++() noexcept {
-        --m_it;
-        return *this;
-    }
-
-    reverse_iterator operator++(int) const noexcept {
-        auto copy = *this;
-        --m_it;
-        return copy;
-    }
-
-    reverse_iterator& operator--() noexcept {
-        ++m_it;
-        return *this;
-    }
-
-    reverse_iterator operator--(int) const noexcept {
-        auto copy = *this;
-        ++m_it;
-        return copy;
-    }
-
-    bool operator==(const reverse_iterator& other) const noexcept {
-        return m_it == other.m_it;
-    }
-
-    bool operator!=(const reverse_iterator& other) const noexcept {
-        return m_it != other.m_it;
-    }
-
-    auto operator-(const reverse_iterator& other) const noexcept
-        -> decltype(m_it - other.m_it) {
-        return m_it - other.m_it;
-    }
-
-    auto operator*() const noexcept -> decltype(*m_it) { return *m_it; }
-
-    I operator->() const noexcept { return m_it; }
-};
 
 template <typename T, typename Allocator = system_allocator>
 class vector {
@@ -101,8 +39,8 @@ public:
     using const_pointer = const value_type*;
     using iterator = pointer;
     using const_iterator = const_pointer;
-    using reverse_iterator = nestl::reverse_iterator<iterator>;
-    using const_reverse_iterator = nestl::reverse_iterator<const_iterator>;
+    using reverse_iterator = nestl::detail::reverse_iterator<iterator>;
+    using const_reverse_iterator = nestl::detail::reverse_iterator<const_iterator>;
 
 private:
     Allocator m_allocator;

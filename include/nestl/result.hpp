@@ -142,7 +142,7 @@ protected:
     }
 
     template <typename F>
-        [[nodiscard]] auto forward_ok(F&& f)
+        [[nodiscard]] auto forward_ok(F&&)
         && noexcept -> result<T, mapped_t<E, F>> {
         using R = result<T, mapped_t<E, F>>;
 
@@ -237,7 +237,7 @@ protected:
     }
 
     template <typename F>
-        [[nodiscard]] auto forward_err(F&& f)
+        [[nodiscard]] auto forward_err(F&&)
         && noexcept -> result<mapped_t<T, F>, E> {
         using R = result<mapped_t<T, F>, E>;
 

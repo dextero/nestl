@@ -41,13 +41,13 @@ protected:
 
     template <typename... Args>
     result_base(ok_t, Args&&... args) noexcept
-        : m_is_ok(true),
-          result_storage<T, E>(tag<T>{}, std::forward<Args>(args)...) {}
+        : result_storage<T, E>(tag<T>{}, std::forward<Args>(args)...),
+          m_is_ok(true) {}
 
     template <typename... Args>
     result_base(err_t, Args&&... args) noexcept
-        : m_is_ok(false),
-          result_storage<T, E>(tag<E>{}, std::forward<Args>(args)...) {}
+        : result_storage<T, E>(tag<E>{}, std::forward<Args>(args)...),
+          m_is_ok(false) {}
 
 public:
     result_base(result_base&& r) noexcept = default;

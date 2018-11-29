@@ -47,7 +47,7 @@ TEST_SUITE("variant") {
         struct Foo {
             int a;
             double b;
-            Foo(int a, double b) : a(a), b(b) {}
+            Foo(int _a, double _b) : a(_a), b(_b) {}
         };
         auto v = variant<Foo, int>::emplace<Foo>(1, 2.0);
     }

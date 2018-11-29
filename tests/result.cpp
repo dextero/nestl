@@ -192,8 +192,8 @@ TEST_SUITE("result") {
     TEST_CASE("map keeps noexceptness") {
         auto void_except = []() { throw std::runtime_error(""); };
         auto void_no_except = []() noexcept {};
-        auto int_except = [](int a) { throw std::runtime_error(""); };
-        auto int_no_except = [](int a) noexcept {};
+        auto int_except = [](int) { throw std::runtime_error(""); };
+        auto int_no_except = [](int) noexcept {};
 
         REQUIRE(!noexcept(result<void, void>::ok().map(void_except)));
         REQUIRE(noexcept(result<void, void>::ok().map(void_no_except)));
@@ -205,8 +205,8 @@ TEST_SUITE("result") {
     TEST_CASE("map_err keeps noexceptness") {
         auto void_except = []() { throw std::runtime_error(""); };
         auto void_no_except = []() noexcept {};
-        auto int_except = [](int a) { throw std::runtime_error(""); };
-        auto int_no_except = [](int a) noexcept {};
+        auto int_except = [](int) { throw std::runtime_error(""); };
+        auto int_no_except = [](int) noexcept {};
 
         REQUIRE(!noexcept(result<void, void>::err().map_err(void_except)));
         REQUIRE(noexcept(result<void, void>::err().map_err(void_no_except)));

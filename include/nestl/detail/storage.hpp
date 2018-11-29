@@ -70,13 +70,14 @@ private:
  * Drop void from Args and provide specialization for zero-typed storage<>.
  * This avoids instantiating zero-sized array, which causes compiler warinngs.
  */
-template<typename... Args>
+template <typename... Args>
 struct storage<void, Args...> : public storage<Args...> {};
 
-template<>
+template <>
 struct storage<> {
 public:
-    template <typename> void destroy() noexcept {}
+    template <typename>
+    void destroy() noexcept {}
 };
 
 }  // namespace detail

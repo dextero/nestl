@@ -135,7 +135,9 @@ private:
 
     template <typename It>
     result<void, out_of_memory> assign(It first, It last) noexcept {
-        if (auto res = reserve(last - first); !res) {
+        assert(first <= last);
+
+        if (auto res = reserve(static_cast<size_t>(last - first)); !res) {
             return {res.err()};
         }
 
@@ -249,7 +251,7 @@ private:
                                            const T& e) noexcept {
         assert(begin() <= pos && pos <= end());
 
-        size_t idx = (pos - begin());
+        size_t idx = static_cast<size_t>(pos - begin());
         if (auto res = reserve(size() + count); !res) {
             return {res.err()};
         }
@@ -268,9 +270,10 @@ private:
     result<iterator, out_of_memory> insert(const_iterator pos, It first,
                                            It last) noexcept {
         assert(begin() <= pos && pos <= end());
+        assert(first <= last);
 
-        size_t count = last - first;
-        size_t idx = pos - begin();
+        size_t idx = static_cast<size_t>(pos - begin());
+        size_t count = static_cast<size_t>(last - first);
         if (auto res = reserve(size() + count); !res) {
             return {res.err()};
         }
@@ -295,7 +298,7 @@ private:
                                             Args&&... args) noexcept {
         assert(begin() <= pos && pos <= end());
 
-        size_t idx = (pos - begin());
+        size_t idx = static_cast<size_t>(pos - begin());
         if (auto res = reserve(size() + 1); !res) {
             return {out_of_memory{}};
         }
@@ -312,8 +315,9 @@ private:
     iterator erase(const_iterator first, const_iterator last) noexcept {
         assert(begin() <= first && first <= end());
         assert(begin() <= last && last <= end());
+        assert(first <= last);
 
-        size_t count = last - first;
+        size_t count = static_cast<size_t>(last - first);
         for (const_iterator p = first; p != last; ++p) {
             p->~T();
         }

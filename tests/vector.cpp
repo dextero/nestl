@@ -110,7 +110,7 @@ TEST_SUITE("vector") {
             vector<int> v;
             v.assign({1, 2, 3});
             REQUIRE(v.at(3).is_err());
-            REQUIRE(v.at(-1).is_err());
+            REQUIRE(v.at(static_cast<size_t>(-1)).is_err());
         }
     }
 

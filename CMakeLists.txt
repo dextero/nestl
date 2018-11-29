@@ -27,7 +27,8 @@ target_sources(nestl_test PRIVATE
                tests/vector.cpp)
 target_link_libraries(nestl_test PRIVATE nestl)
 target_compile_options(nestl_test PRIVATE
-                       $<$<CXX_COMPILER_ID:GNU>:-Wall -Wextra -Weverything>)
+                       $<$<CXX_COMPILER_ID:GNU>:-Wall -Wextra>
+                       $<$<CXX_COMPILER_ID:Clang>:-Weverything -Wno-c++98-compat>)
 
 enable_testing()
 add_test(NAME nestl COMMAND $<TARGET_FILE:nestl_test> DEPENDS nestl_test)

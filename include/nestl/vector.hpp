@@ -40,7 +40,8 @@ public:
     using iterator = pointer;
     using const_iterator = const_pointer;
     using reverse_iterator = nestl::detail::reverse_iterator<iterator>;
-    using const_reverse_iterator = nestl::detail::reverse_iterator<const_iterator>;
+    using const_reverse_iterator =
+        nestl::detail::reverse_iterator<const_iterator>;
 
 private:
     Allocator m_allocator;

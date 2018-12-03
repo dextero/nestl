@@ -316,8 +316,8 @@ public:
     template <typename F>
         auto map(F&& f)
         && noexcept(
-               noexcept(std::move(*this).map_ok_impl(std::declval<F>(), 0))
-               && noexcept(std::move(*this).forward_err(std::declval<F>())))
+               noexcept(std::declval<result>().map_ok_impl(std::declval<F>(), 0))
+               && noexcept(std::declval<result>().forward_err(std::declval<F>())))
                -> result<detail::mapped_t<T, F>, E> {
         if (this->is_ok()) {
             return std::move(*this).map_ok_impl(std::forward<F>(f), 0);
@@ -329,8 +329,8 @@ public:
 
     template <typename F>
         auto map_err(F&& f)
-        && noexcept(noexcept(std::move(*this).forward_ok(std::declval<F>()))
-                    && noexcept(std::move(*this).map_err_impl(std::declval<F>(),
+        && noexcept(noexcept(std::declval<result>().forward_ok(std::declval<F>()))
+                    && noexcept(std::declval<result>().map_err_impl(std::declval<F>(),
                                                               0)))
                -> result<T, detail::mapped_t<E, F>> {
         if (this->is_ok()) {

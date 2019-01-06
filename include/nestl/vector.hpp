@@ -101,6 +101,7 @@ private:
             swap(src);
             src.clear();
         }
+        return *this;
     }
 
     // use copy() instead
@@ -257,7 +258,7 @@ private:
         }
 
         pos = begin() + idx;
-        std::copy_backward(const_cast<iterator>(pos), end(), end() + count);
+        std::move_backward(const_cast<iterator>(pos), end(), end() + count);
         for (size_t i = 0; i < count; ++i) {
             new (const_cast<iterator>(pos + i)) T(e);
         }
@@ -279,7 +280,7 @@ private:
         }
 
         pos = begin() + idx;
-        std::copy_backward(const_cast<iterator>(pos), end(), end() + count);
+        std::move_backward(const_cast<iterator>(pos), end(), end() + count);
         for (const_iterator at = pos; first != last; ++first, ++at) {
             new (const_cast<iterator>(at)) T(*first);
         }
@@ -304,7 +305,7 @@ private:
         }
 
         pos = begin() + idx;
-        std::copy_backward(const_cast<iterator>(pos), end(), end() + 1);
+        std::move_backward(const_cast<iterator>(pos), end(), end() + 1);
         new (const_cast<iterator>(pos)) T(std::forward<Args>(args)...);
         ++m_size;
         return {const_cast<iterator>(pos)};
@@ -322,7 +323,7 @@ private:
             p->~T();
         }
 
-        std::copy(const_cast<iterator>(last), end(),
+        std::move(const_cast<iterator>(last), end(),
                   const_cast<iterator>(first));
         m_size -= count;
         return const_cast<iterator>(first);

@@ -327,4 +327,74 @@ TEST_SUITE("vector") {
         // just make sure this compiles
         vector<vector<int>> vvi;
     }
+
+    TEST_CASE("iterator") {
+        vector<int> v;
+        v.assign({1, 2});
+
+        auto it = v.begin();
+        REQUIRE(*it == 1);
+        *it++ = 11;
+        REQUIRE(*it == 2);
+        *it++ = 12;
+        REQUIRE(it == v.end());
+
+        REQUIRE(v == V{11, 12});
+    }
+
+    TEST_CASE("const iterator") {
+        const vector<int> v = []() {
+            vector<int> v1;
+            v1.assign({1, 2});
+            return v1;
+        }();
+
+        {
+            auto it = v.begin();
+            REQUIRE(*it++ == 1);
+            REQUIRE(*it++ == 2);
+            REQUIRE(it == v.end());
+        }
+        {
+            auto it = v.cbegin();
+            REQUIRE(*it++ == 1);
+            REQUIRE(*it++ == 2);
+            REQUIRE(it == v.cend());
+        }
+    }
+
+    TEST_CASE("reverse iterator") {
+        vector<int> v;
+        v.assign({1, 2});
+
+        auto it = v.rbegin();
+        REQUIRE(*it == 2);
+        *it++ = 12;
+        REQUIRE(*it == 1);
+        *it++ = 11;
+        REQUIRE(it == v.rend());
+
+        REQUIRE(v == V{11, 12});
+    }
+
+    TEST_CASE("const reverse iterator") {
+        const vector<int> v = []() {
+            vector<int> v1;
+            v1.assign({1, 2});
+            return v1;
+        }();
+
+        {
+            auto it = v.rbegin();
+            REQUIRE(*it++ == 2);
+            REQUIRE(*it++ == 1);
+            REQUIRE(it == v.rend());
+        }
+        {
+            auto it = v.crbegin();
+            REQUIRE(*it++ == 2);
+            REQUIRE(*it++ == 1);
+            REQUIRE(it == v.crend());
+        }
+    }
 }

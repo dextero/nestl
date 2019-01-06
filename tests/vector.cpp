@@ -322,4 +322,9 @@ TEST_SUITE("vector") {
         REQUIRE(v1 == V{3, 4, 5, 6});
         REQUIRE(v2 == V{1, 2});
     }
+
+    TEST_CASE("2d vector") {
+        // just make sure this compiles
+        vector<vector<int>> vvi;
+    }
 }

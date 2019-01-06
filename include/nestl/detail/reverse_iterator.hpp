@@ -40,7 +40,7 @@ public:
         return *this;
     }
 
-    reverse_iterator operator++(int) const noexcept {
+    reverse_iterator operator++(int) noexcept {
         auto copy = *this;
         --m_it;
         return copy;
@@ -51,7 +51,7 @@ public:
         return *this;
     }
 
-    reverse_iterator operator--(int) const noexcept {
+    reverse_iterator operator--(int) noexcept {
         auto copy = *this;
         ++m_it;
         return copy;

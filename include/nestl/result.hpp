@@ -164,6 +164,11 @@ public:
         return std::move(*this).template as<T>();
     }
 
+    [[nodiscard]] T& ok() & noexcept {
+        assert(this->is_ok());
+        return this->template as<T>();
+    }
+
     [[nodiscard]] const T& ok() const& noexcept {
         assert(this->is_ok());
         return this->template as<T>();
@@ -257,6 +262,11 @@ public:
     [[nodiscard]] E err() && noexcept {
         assert(this->is_err());
         return std::move(*this).template as<E>();
+    }
+
+    [[nodiscard]] E& err() & noexcept {
+        assert(this->is_err());
+        return this->template as<E>();
     }
 
     [[nodiscard]] const E& err() const& noexcept {

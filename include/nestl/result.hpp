@@ -39,6 +39,22 @@ protected:
     result_base(ok_t, void_t) : m_is_ok(true) {}
     result_base(err_t, void_t) : m_is_ok(false) {}
 
+    result_base(result<T, E>&& r) noexcept
+        : result_storage<T, E>(),
+          m_is_ok(r.is_ok()) {
+        using storage = result_storage<T, E>;
+
+        if (m_is_ok) {
+            if constexpr (!std::is_void_v<T>) {
+                new (static_cast<storage*>(this)) storage{tag<T>{}, std::move(r).ok()};
+            }
+        } else {
+            if constexpr (!std::is_void_v<E>) {
+                new (static_cast<storage*>(this)) storage{tag<E>{}, std::move(r).err()};
+            }
+        }
+    }
+
     template <typename... Args>
     result_base(ok_t, Args&&... args) noexcept
         : result_storage<T, E>(tag<T>{}, std::forward<Args>(args)...),
@@ -317,8 +333,27 @@ public:
     result(Args&&... args) noexcept
         : detail::choose_ok<T, E>(std::forward<Args>(args)...) {}
 
-    result(result&&) noexcept = default;
-    result& operator=(result&&) noexcept = default;
+    result(result&& r) noexcept : detail::choose_ok<T, E>(std::move(r)) {}
+    result& operator=(result&& r) noexcept {
+        if (this != &r) {
+            this->~result();
+
+            if (r.is_ok()) {
+                if constexpr (std::is_void_v<T>) {
+                    new(this) result{ok_t{}};
+                } else {
+                    new(this) result{ok_t{}, std::move(r).ok()};
+                }
+            } else {
+                if constexpr (std::is_void_v<E>) {
+                    new(this) result{err_t{}};
+                } else {
+                    new(this) result{err_t{}, std::move(r).err()};
+                }
+            }
+        }
+        return *this;
+    }
 
     result(const result&) = delete;
     result& operator=(const result&) = delete;
